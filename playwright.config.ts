@@ -31,9 +31,7 @@ export default defineConfig({
           args: [
             "--enable-gpu",
             "--ignore-gpu-blocklist",
-            "--use-gl=angle",
-            "--use-angle=swiftshader",
-            "--enable-unsafe-swiftshader",
+            "--use-gl=desktop",
           ],
         },
       },
