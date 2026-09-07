@@ -41,7 +41,6 @@ export function MedMapCanvas() {
       zoom: 13.05,
       pitch: 58,
       bearing: -18,
-      antialias: true,
     });
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "bottom-right");
