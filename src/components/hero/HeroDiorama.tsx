@@ -254,7 +254,12 @@ export function HeroDiorama() {
 
   return (
     <div className="hero-diorama" aria-hidden="true">
-      <canvas ref={canvasRef} className="hero-mesh-canvas" data-testid="hero-mesh-canvas" />
+      <canvas
+        ref={canvasRef}
+        className="hero-mesh-canvas"
+        data-testid="hero-mesh-canvas"
+        style={{ width: "100%", height: "100%", display: "block" }}
+      />
     </div>
   );
 }
