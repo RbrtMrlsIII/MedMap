@@ -32,7 +32,7 @@ export default defineConfig({
             "--enable-gpu",
             "--ignore-gpu-blocklist",
             "--use-gl=angle",
-            "--use-angle=swiftshader-webgl",
+            "--use-angle=swiftshader",
             "--enable-unsafe-swiftshader",
           ],
         },
