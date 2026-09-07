@@ -113,12 +113,12 @@ h1 { margin-bottom: 0; font-size: 22px; }
 }
 
 @media (max-width: 680px) {
-  .hero-environment { min-height: 880px; }
+  .hero-environment { min-height: 1050px; }
   .hero-nav { left: 12px; right: 12px; top: 12px; border-radius: 20px; }
   .hero-nav-context { display: none; }
   .hero-copy { left: 12px; width: calc(100vw - 24px); top: 150px; padding: 21px; transform: none; }
   .hero-copy h2 { font-size: 44px; }
-  .floating-clinic-card { left: 12px; right: 12px; bottom: 92px; width: auto; transform: none; }
+  .floating-clinic-card { left: 12px; right: 12px; top: 780px; bottom: auto; width: auto; transform: none; }
   .spatial-inspector { right: 12px; top: 96px; width: 160px; transform: scale(.82); transform-origin: top right; }
   .diorama-skyline { width: 90%; right: -9%; bottom: 18%; }
   .diorama-platform { width: 330px; height: 330px; right: -75px; bottom: -1%; }
