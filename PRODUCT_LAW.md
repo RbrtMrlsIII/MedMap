@@ -81,25 +81,21 @@ clinical disclaimers
 
 ## 3. Clinic Page Law
 
-Every published clinic has a canonical clinic page with a stable navigation model.
+Every published clinic has one canonical clinic page with a stable navigation model.
 
 ### 3.1 Public/guest clinic surface
 
-For guests, the clinic page exposes exactly these product concepts:
+Guests see these five semantic tabs:
 
 ```text
-PROFILE
-SERVICES
-BOOKING
-ABOUT
-CONTACT
+PROFILE | SERVICES | BOOKING | ABOUT | CONTACT
 ```
 
-The visual implementation may render these as tabs, segmented navigation, routes, panels, or responsive equivalents, but the semantic surfaces MUST remain distinct.
+The implementation may render these as tabs, nested routes, segmented navigation, responsive panels, or equivalent navigation, but the five responsibilities MUST remain distinct.
 
 ### 3.2 Clinic hero
 
-Every clinic has one canonical **clinic hero**: the first high-salience presentation encountered when a user visits the clinic page.
+Every clinic has exactly one canonical **clinic hero**, the primary high-salience presentation shown when a user enters that clinic page.
 
 The hero should establish:
 
@@ -112,79 +108,98 @@ primary trust/availability signal
 primary next action
 ```
 
-The hero is presentation, not a second profile database. It MUST derive from the clinic's canonical profile data.
+The hero MUST derive from canonical clinic data and MUST NOT become a second source of truth.
 
 ### 3.3 Profile tab
 
-The Profile tab contains the clinic's primary public identity and presentation information:
+The Profile tab presents:
 
 ```text
 logo
-background / cover visual
+background / cover
 clinic name
-basic clinic information
+basic information
 location/context
-approved links where applicable
+approved links
 service-summary information
 ```
 
-Profile content is clinic-owned data, subject to platform validation and publication state.
+Only published/approved public data is displayed.
 
 ### 3.4 Services tab
 
-The Services tab displays the services/treatments currently enabled for that clinic and allowed to be public.
+The Services tab displays services/treatments explicitly enabled for public display by the clinic.
 
-Each service MAY expose:
+A service MAY include:
 
 ```text
 name
-customer-facing description
+description
 duration
 price state
-booking availability state
-booking constraints where material
+bookability/availability state
+material customer constraints
 ```
 
-A service that is disabled, unpublished, or otherwise not eligible for booking MUST NOT be presented as currently bookable.
+Disabled or unpublished services MUST NOT be presented as currently bookable.
 
-Unknown or intentionally unpublished price MUST remain a distinct state such as `Contact clinic` or `Price not published`; it MUST NOT become zero by inference.
+Price state MUST remain explicit, for example:
+
+```text
+priced
+price not published
+contact clinic
+```
+
+Missing price MUST NOT become zero.
 
 ### 3.5 Booking tab
 
-The Booking tab is the customer submission surface for selecting a service, date, and valid time and providing the minimum information required by the clinic's approved booking flow.
+The Booking tab is the customer booking-submission surface.
 
-The Booking tab MUST derive availability from clinic rules and durable booking state. It MUST NOT create a confirmed booking through client-only state.
+The canonical flow is:
+
+```text
+choose service
+→ choose date
+→ choose server-derived available time
+→ provide minimum approved booking information
+→ submit booking
+→ receive authoritative result
+```
+
+Selecting a time does not reserve it. Confirmation exists only after the authoritative booking operation succeeds.
 
 ### 3.6 About tab
 
 The About tab contains the clinic's public bio and approved descriptive information.
 
-Clinic owners may edit this information through the owner-only Edit surface. The About tab MUST NOT silently contain private operational notes, internal policy, secrets, or unapproved clinical claims.
+Clinic owners may edit this through Edit. Private operational notes, secrets, or unapproved clinical claims MUST NOT leak into the guest surface.
 
 ### 3.7 Contact tab
 
 The Contact tab exposes clinic-provided contact channels.
 
-A clinic MUST provide at least one valid contact method before its public contact surface is considered complete.
+A clinic MUST provide at least one valid contact method before its public contact configuration is complete.
 
-Supported contact channels MAY include:
+Supported examples include:
 
 ```text
 email
 phone
 website
-messaging/community link
+discord / community URL
 social link
 other approved external contact URL
 ```
 
-The platform MUST validate the structure/type of a supplied link or contact value appropriate to the channel. Contact information is public only when the clinic chooses to publish it.
+The platform MUST validate the structure/type appropriate to the channel.
 
-## 4. Clinic Owner Edit Law
+## 4. Owner Edit Law
 
 ### 4.1 Edit is owner-only
 
-`EDIT` is an authenticated clinic-management surface and MUST NOT appear in guest navigation.
+`Edit` is not a guest tab and MUST NOT appear in guest navigation.
 
 Guest view:
 
@@ -192,39 +207,49 @@ Guest view:
 Profile | Services | Booking | About | Contact
 ```
 
-Authorized clinic owner view MAY additionally expose:
+An authorized clinic owner MAY additionally see:
 
 ```text
 Edit
 ```
 
-The owner surface may manage:
+The Edit surface MAY manage:
 
 ```text
 profile identity/presentation
-services
-service pricing state
+services and service state
+pricing state
 weekly schedule
 closed dates / exceptions
 capacity
 booking interval
 booking policy
-about text
+about content
 contact channels
 publication state where authorized
 ```
 
 ### 4.2 Authorization boundary
 
-Ownership MUST be established from authenticated identity and canonical clinic ownership state. A client-provided clinic ID, hidden UI control, route secrecy, or local state MUST NOT be treated as proof of ownership.
+Ownership MUST be established from authenticated identity and canonical clinic ownership state.
 
-Hiding Edit is presentation. Authorization is enforcement.
+None of the following is sufficient authorization:
 
-### 4.3 Edit writes are canonical domain mutations
+```text
+hidden button
+client route secrecy
+local storage value
+client-provided clinic owner claim
+query parameter
+```
 
-Owner edits change Firestore-owned clinic domain state through an authorized mutation boundary. The UI MAY optimistically preview changes, but the authoritative state is the accepted durable write.
+UI visibility is presentation. Backend authorization is enforcement.
 
-Material owner changes that affect availability MUST invalidate or recompute relevant availability views before customers are allowed to book from stale assumptions.
+### 4.3 Owner edits and availability
+
+Owner edits to scheduling, service availability, duration, capacity, interval, or other booking-affecting fields MUST be treated as domain mutations that can invalidate customer-facing availability.
+
+The product MUST recheck or invalidate stale availability before booking acceptance.
 
 ## 5. Scheduling and Capacity Law
 
@@ -242,7 +267,7 @@ concurrent
 optional treatment-specific override
 ```
 
-Occupancy is evaluated across the treatment's active time range, not only by matching start timestamps.
+Occupancy is evaluated over the treatment's active time range, not only by matching start timestamps.
 
 Conceptually:
 
@@ -252,8 +277,6 @@ remaining capacity
 configured capacity
 − overlapping accepted occupancy
 ```
-
-The final booking decision MUST occur against authoritative durable state.
 
 ## 6. Clinical Matter and Service Law
 
@@ -265,7 +288,7 @@ clinical matter / customer need
 treatment / service offered
 ```
 
-The mapping between them exists for discovery only. Additional clinical metadata, eligibility rules, intake questions, or medical-record concepts require explicit product-law and safety review.
+The mapping exists for discovery only. Additional clinical metadata, eligibility rules, intake questions, diagnoses, or medical-record concepts require explicit product-law and safety review.
 
 ## 7. Data and Infrastructure Authority
 
@@ -292,7 +315,7 @@ Firebase Authentication establishes authenticated identity when enabled. Authent
 
 ### Supabase Storage
 
-Supabase Storage stores clinic media and related approved assets. Firestore stores the metadata/references needed by the product.
+Supabase Storage stores clinic media and approved assets. Firestore stores required metadata/references.
 
 Storage does not become the clinic-domain database merely because it stores files.
 
@@ -330,11 +353,11 @@ Firestore subscription projection
 entitlement decision
 ```
 
-Subscription state and booking state are distinct. An active subscription does not mean that a clinic is open or that a treatment/time is available.
+Subscription state and booking state are distinct.
 
 ## 9. Governance Boundary
 
-MedMap adopts the TeamAi/ToolKit governance principle that product authority, execution discipline, skills, implementation, and evidence are different layers.
+MedMap adopts the TeamAi/ToolKit principle that product authority, execution discipline, skills, implementation, and evidence are different layers.
 
 ```text
 Human product decisions
@@ -374,7 +397,7 @@ M Minimalistic Efficiency / Resource Use
 
 Before an implementation action, the agent must understand what is being changed, what must not be crossed, why the user authorized it, which system owns the state, the smallest safe action, how it will be verified, how unnecessary work is avoided, what evidence survives, and the minimum sufficient resource/tool use.
 
-ORUCAVEAM is not a second product constitution.
+ORUCAVEAM is not a second product law.
 
 ## 11. Verification Law
 
@@ -392,7 +415,7 @@ Firestore read-back → observed durable-state evidence
 PayPal live test → tested external commerce-path evidence
 ```
 
-A screenshot or green build MUST NOT be inflated into proof of unrelated backend, authorization, payment, or concurrency behavior.
+A browser screenshot or green build MUST NOT be inflated into proof of unrelated backend, authorization, payment, or concurrency behavior.
 
 ## 12. Privacy and Safety
 
@@ -475,10 +498,10 @@ Product Law
   → handover / endorsement
 ```
 
-Booking-critical work must include relevant availability, authorization, concurrency, idempotency, and failure-path evidence.
+Clinic ownership and booking-critical work must include the relevant authorization, visibility, availability, concurrency, idempotency, and failure-path evidence.
 
 ## 16. Initial North Star
 
 > **Make it easier to find a real clinic that offers the service you need, see what it actually offers, understand how to contact it, and book a time the clinic can genuinely accept.**
 
-The map, clinic page, profile, services, booking, about, contact, and owner-edit experiences all serve that promise.
+The map, clinic hero, Profile, Services, Booking, About, Contact, and owner-only Edit experiences all serve that promise.
