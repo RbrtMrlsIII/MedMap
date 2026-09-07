@@ -16,9 +16,9 @@ The implementation may use tabs, nested routes, segmented controls, responsive p
 
 ## Clinic hero
 
-The clinic page has one canonical hero presentation derived from the clinic's profile state.
+The clinic page has one canonical **clinic hero**, the first high-salience presentation when a user enters that clinic page.
 
-Minimum hero responsibilities:
+Minimum responsibilities:
 
 - establish clinic identity;
 - present logo/primary visual where available;
@@ -27,7 +27,7 @@ Minimum hero responsibilities:
 - provide the primary next action;
 - communicate important availability/trust state without inventing facts.
 
-The hero is not a second source of clinic data.
+The hero is presentation derived from canonical clinic data, not a second source of clinic truth.
 
 ## Profile tab
 
@@ -98,7 +98,7 @@ The source is clinic-owned profile state. Private operational notes and secrets 
 
 The Contact tab displays clinic-provided contact channels.
 
-A clinic must provide at least one valid contact method before its public contact configuration is complete.
+At least one valid contact method is required before the clinic's public contact configuration is considered complete.
 
 Supported examples:
 
@@ -123,7 +123,7 @@ Guest navigation:
 Profile | Services | Booking | About | Contact
 ```
 
-Authorized clinic owner navigation may add:
+Authorized clinic owner navigation may additionally expose:
 
 ```text
 Edit
@@ -159,7 +159,7 @@ client-provided clinic owner claim
 query parameter
 ```
 
-UI visibility is presentation. Server/backend authorization is enforcement.
+UI visibility is presentation. Backend authorization is enforcement.
 
 ## Availability coupling
 
@@ -204,3 +204,4 @@ At minimum, verification must prove:
 6. At least one contact method is required for completed public contact configuration.
 7. Price-not-published remains distinct from zero price.
 8. Availability-affecting edits trigger appropriate stale-state handling.
+9. Hero content is derived from the same canonical clinic profile state as Profile.
