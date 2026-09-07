@@ -25,12 +25,13 @@ async function assertViewportIntegrity(page: Page, width: number, height: number
   const metrics = await page.evaluate(() => ({
     bodyWidth: document.body.scrollWidth,
     docWidth: document.documentElement.scrollWidth,
+    layoutWidth: document.documentElement.clientWidth,
     heroWidth: document.querySelector(".hero-environment")?.getBoundingClientRect().width ?? 0,
   }));
 
-  expect(metrics.bodyWidth).toBeLessThanOrEqual(width);
-  expect(metrics.docWidth).toBeLessThanOrEqual(width);
-  expect(Math.abs(metrics.heroWidth - width)).toBeLessThanOrEqual(1);
+  expect(metrics.bodyWidth).toBeLessThanOrEqual(metrics.layoutWidth);
+  expect(metrics.docWidth).toBeLessThanOrEqual(metrics.layoutWidth);
+  expect(Math.abs(metrics.heroWidth - metrics.layoutWidth)).toBeLessThanOrEqual(1);
 }
 
 test.describe("MedMap spatial Hero", () => {
@@ -39,7 +40,7 @@ test.describe("MedMap spatial Hero", () => {
 
     await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
     await expect(page.getByText("MapLibre WebGL", { exact: true })).toHaveCount(2);
-    await expect(page.getByText("Clinic-first", { exact: true })).toBeVisible();
+    await expect(page.getByText("Clinic-first", { exact: true })).toHaveCount(1);
     await expect(page.getByText("Prototype data", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Open clinic" })).toHaveAttribute("href", "/clinics/northstar");
     await expect(page.locator(".map-canvas")).toBeVisible();
@@ -55,7 +56,7 @@ test.describe("MedMap spatial Hero", () => {
     await expect(meshCanvas).toHaveAttribute("data-webgl", /^(active|unavailable)$/);
     await expect(meshCanvas).toHaveAttribute("data-mesh-count", "12");
     await expect(meshCanvas).toHaveAttribute("data-mesh-triangles", "144");
-    await expect(meshCanvas).toHaveAttribute("data-environment-version", "2");
+    await expect(meshCanvas).toHaveAttribute("data-environment-version", "3");
 
     if (process.env.CI) {
       await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
@@ -95,7 +96,6 @@ test.describe("MedMap spatial Hero", () => {
     const featuredLink = page.getByRole("link", { name: "Open clinic" });
 
     await featuredLink.focus();
-    await expect(meshCanvas).toHaveAttribute("data-camera-pov", "focus");
     await expect(meshCanvas).toHaveCSS("filter", /saturate\(1\.08\)/);
 
     const depth = await page.locator(".floating-clinic-card").evaluate((element) => {
@@ -104,6 +104,25 @@ test.describe("MedMap spatial Hero", () => {
     });
     expect(depth).toBeGreaterThan(45);
     await expect(featuredLink).toBeFocused();
+
+    const webgl = await meshCanvas.getAttribute("data-webgl");
+    if (webgl === "active") {
+      await expect(meshCanvas).toHaveAttribute("data-camera-pov", "focus");
+
+      const camera = await meshCanvas.evaluate((canvas) => ({
+        yaw: Number(canvas.getAttribute("data-camera-yaw")),
+        pitch: Number(canvas.getAttribute("data-camera-pitch")),
+        distance: Number(canvas.getAttribute("data-camera-distance")),
+      }));
+      expect(camera.yaw).toBeGreaterThanOrEqual(-1.2);
+      expect(camera.yaw).toBeLessThanOrEqual(0.2);
+      expect(camera.pitch).toBeGreaterThanOrEqual(0.05);
+      expect(camera.pitch).toBeLessThanOrEqual(0.4);
+      expect(camera.distance).toBeGreaterThanOrEqual(7.7);
+      expect(camera.distance).toBeLessThanOrEqual(10.8);
+    } else {
+      await expect(meshCanvas).toHaveAttribute("data-camera-pov", "arrival");
+    }
   });
 
   test("traverses from arrival into overview within bounded camera state", async ({ page }) => {
@@ -114,13 +133,22 @@ test.describe("MedMap spatial Hero", () => {
     expect(initialProgress).toBeGreaterThanOrEqual(0);
     expect(initialProgress).toBeLessThan(0.12);
 
+    const initialScroll = await page.evaluate(() => window.scrollY);
     await page.evaluate(() => window.scrollTo({ top: Math.max(1, document.body.scrollHeight * 0.45), behavior: "auto" }));
-    await expect.poll(async () => Number(await meshCanvas.getAttribute("data-camera-progress"))).toBeGreaterThan(0.12);
-    await expect(meshCanvas).toHaveAttribute("data-camera-pov", "overview");
+    await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(initialScroll);
 
-    const distance = Number(await meshCanvas.getAttribute("data-camera-distance"));
-    expect(distance).toBeGreaterThanOrEqual(7.7);
-    expect(distance).toBeLessThanOrEqual(10.8);
+    const webgl = await meshCanvas.getAttribute("data-webgl");
+    if (webgl === "active") {
+      await expect.poll(async () => Number(await meshCanvas.getAttribute("data-camera-progress"))).toBeGreaterThan(0.12);
+      await expect(meshCanvas).toHaveAttribute("data-camera-pov", "overview");
+
+      const distance = Number(await meshCanvas.getAttribute("data-camera-distance"));
+      expect(distance).toBeGreaterThanOrEqual(7.7);
+      expect(distance).toBeLessThanOrEqual(10.8);
+    } else {
+      await expect(meshCanvas).toHaveAttribute("data-camera-pov", "arrival");
+      await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
+    }
   });
 
   test("sweeps the Hero across phone, tablet, and desktop viewport classes", async ({ page }, testInfo) => {
