@@ -42,14 +42,27 @@ Selecting a marker must select the corresponding clinic result. Selecting a list
 
 3D is an experience layer, not a requirement for basic usability. The application must remain understandable and usable without tilt/terrain effects, and reduced-motion preferences must be respected.
 
+MedMap's authored spatial Hero additionally uses a dedicated WebGL2 scene for 3D meshes. This mesh scene is a presentation layer separate from MapLibre geography and must not become a hidden source of clinic/domain state.
+
+The runtime must support graceful degradation when WebGL2 is unavailable. Critical labels, actions, and clinic information remain available in semantic HTML outside the canvas.
+
+## Mesh principles
+
+The first authored mesh set should be deliberately small and reusable. Prefer a few low-poly, performance-bounded environment primitives over a large asset catalog.
+
+Meshes may represent clinic architecture, spatial landmarks, discovery beacons, or decorative environment geometry. They must not encode authoritative availability, entitlement, booking, or ownership state through geometry alone.
+
+External mesh-generation workflows, including Meshy or Blender, are optional production paths. Any generated asset must retain provenance, declared dimensions/topology budgets, and a review gate before becoming a runtime asset. Procedural meshes are acceptable for early frontend prototypes.
+
 ## Asset direction
 
-The first asset set should be deliberately small:
+The frontend-first asset set is:
 
 1. map style and basemap tiles;
 2. clinic marker system;
-3. subtle spatial-glass panels;
-4. clinic photo/identity media;
-5. optional 3D decorative scene elements only after the core map and booking flow are stable.
+3. authored WebGL2 mesh environment for the Hero;
+4. subtle spatial-glass panels;
+5. clinic photo/identity media;
+6. richer imported 3D assets only after runtime budgets and spatial usefulness are demonstrated.
 
 Do not allow decorative 3D assets to become prerequisites for booking correctness.
