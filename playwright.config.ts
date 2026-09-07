@@ -1,5 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const chromiumLaunchOptions = {
+  args: [
+    "--enable-gpu",
+    "--ignore-gpu-blocklist",
+    "--use-gl=angle",
+    "--use-angle=gl",
+  ],
+};
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -22,19 +31,30 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
+      name: "chromium-desktop",
       use: {
         ...devices["Desktop Chrome"],
         channel: "chromium",
         headless: false,
-        launchOptions: {
-          args: [
-            "--enable-gpu",
-            "--ignore-gpu-blocklist",
-            "--use-gl=angle",
-            "--use-angle=gl",
-          ],
-        },
+        launchOptions: chromiumLaunchOptions,
+      },
+    },
+    {
+      name: "chromium-tablet",
+      use: {
+        ...devices["iPad Mini"],
+        channel: "chromium",
+        headless: false,
+        launchOptions: chromiumLaunchOptions,
+      },
+    },
+    {
+      name: "chromium-mobile",
+      use: {
+        ...devices["Pixel 7"],
+        channel: "chromium",
+        headless: false,
+        launchOptions: chromiumLaunchOptions,
       },
     },
   ],
