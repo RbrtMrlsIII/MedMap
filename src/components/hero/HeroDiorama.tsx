@@ -20,22 +20,15 @@ type CameraPose = {
 };
 
 const MESHES: MeshSpec[] = [
-  // Spatial arrival field.
   { center: [0, -0.34, 0.2], size: [8.6, 0.28, 5.4], color: [0.08, 0.19, 0.23] },
   { center: [0.15, -0.12, -0.08], size: [3.7, 0.18, 2.6], color: [0.12, 0.34, 0.40] },
   { center: [0.15, -0.015, -1.22], size: [0.62, 0.05, 2.0], color: [0.36, 0.66, 0.71], emissive: 0.08 },
-
-  // Featured clinic mass, stepped roofline, and lobby canopy.
   { center: [-0.7, 0.88, -0.10], size: [1.85, 1.85, 1.55], color: [0.50, 0.78, 0.84] },
   { center: [0.68, 1.18, 0.18], size: [1.22, 2.45, 1.18], color: [0.67, 0.89, 0.92] },
   { center: [0.02, 0.78, -0.86], size: [1.52, 0.18, 0.30], color: [0.42, 0.82, 0.88], emissive: 0.18 },
-
-  // Arrival portal and illuminated entrance spine.
   { center: [-0.72, 0.82, -1.05], size: [0.15, 1.72, 0.18], color: [0.37, 0.78, 0.86], emissive: 0.14 },
   { center: [0.72, 0.82, -1.05], size: [0.15, 1.72, 0.18], color: [0.37, 0.78, 0.86], emissive: 0.14 },
   { center: [0, 1.66, -1.05], size: [1.58, 0.15, 0.18], color: [0.53, 0.92, 0.96], emissive: 0.22 },
-
-  // Landmark beacon and distant city masses.
   { center: [2.55, 0.62, 0.75], size: [0.24, 2.02, 0.24], color: [0.29, 0.67, 0.76], emissive: 0.25 },
   { center: [-2.35, 0.44, 1.55], size: [1.05, 1.55, 0.92], color: [0.10, 0.25, 0.29] },
   { center: [2.55, 0.43, 1.68], size: [1.00, 1.62, 0.92], color: [0.10, 0.25, 0.29] },
@@ -177,18 +170,12 @@ function lookAt(eye: Vec3, target: Vec3, up: Vec3 = [0, 1, 0]) {
   const zz = eye[2] - target[2];
   const zLength = Math.hypot(zx, zy, zz) || 1;
   const z = [zx / zLength, zy / zLength, zz / zLength];
-
   const xx = up[1] * z[2] - up[2] * z[1];
   const xy = up[2] * z[0] - up[0] * z[2];
   const xz = up[0] * z[1] - up[1] * z[0];
   const xLength = Math.hypot(xx, xy, xz) || 1;
   const x = [xx / xLength, xy / xLength, xz / xLength];
-
-  const y = [
-    z[1] * x[2] - z[2] * x[1],
-    z[2] * x[0] - z[0] * x[2],
-    z[0] * x[1] - z[1] * x[0],
-  ];
+  const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
 
   return new Float32Array([
     x[0], y[0], z[0], 0,
@@ -213,7 +200,6 @@ function buildBox(center: Vec3, size: Vec3, color: Color, emissive = 0) {
   const y1 = cy + hy;
   const z0 = cz - hz;
   const z1 = cz + hz;
-
   const faceColors: Color[] = [
     color,
     color.map((value) => value * 0.80) as Color,
@@ -225,7 +211,6 @@ function buildBox(center: Vec3, size: Vec3, color: Color, emissive = 0) {
   const faceNormals: Vec3[] = [
     [0, 0, 1], [0, 0, -1], [0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0],
   ];
-
   const faces: Vec3[][] = [
     [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]],
     [[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0]],
@@ -234,12 +219,10 @@ function buildBox(center: Vec3, size: Vec3, color: Color, emissive = 0) {
     [[x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1]],
     [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]],
   ];
-
   const vertices: number[] = [];
   const colors: number[] = [];
   const normals: number[] = [];
   const emissiveData: number[] = [];
-
   faces.forEach((face, faceIndex) => {
     face.forEach((vertex) => {
       vertices.push(...vertex);
@@ -248,7 +231,6 @@ function buildBox(center: Vec3, size: Vec3, color: Color, emissive = 0) {
       emissiveData.push(emissive);
     });
   });
-
   return {
     vertices,
     colors,
@@ -271,7 +253,6 @@ export function HeroDiorama() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const gl = canvas.getContext("webgl2", { alpha: true, antialias: true });
     if (!gl) {
       canvas.dataset.webgl = "unavailable";
@@ -289,15 +270,12 @@ export function HeroDiorama() {
     const emissiveLocation = gl.getAttribLocation(program, "a_emissive");
     const matrixLocation = gl.getUniformLocation(program, "u_matrix");
     const timeLocation = gl.getUniformLocation(program, "u_time");
-
     const positionBuffer = gl.createBuffer();
     const colorBuffer = gl.createBuffer();
     const normalBuffer = gl.createBuffer();
     const emissiveBuffer = gl.createBuffer();
     const indexBuffer = gl.createBuffer();
-    if (!positionBuffer || !colorBuffer || !normalBuffer || !emissiveBuffer || !indexBuffer) {
-      throw new Error("Unable to create WebGL buffers");
-    }
+    if (!positionBuffer || !colorBuffer || !normalBuffer || !emissiveBuffer || !indexBuffer) throw new Error("Unable to create WebGL buffers");
 
     const positionData: number[] = [];
     const colorData: number[] = [];
@@ -305,7 +283,6 @@ export function HeroDiorama() {
     const emissiveData: number[] = [];
     const indexData: number[] = [];
     let vertexOffset = 0;
-
     for (const mesh of MESHES) {
       const box = buildBox(mesh.center, mesh.size, mesh.color, mesh.emissive ?? 0);
       positionData.push(...box.vertices);
@@ -323,22 +300,18 @@ export function HeroDiorama() {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionData), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
-
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(colorLocation);
     gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
-
     gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalData), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(normalLocation);
     gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
-
     gl.bindBuffer(gl.ARRAY_BUFFER, emissiveBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(emissiveData), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(emissiveLocation);
     gl.vertexAttribPointer(emissiveLocation, 1, gl.FLOAT, false, 0, 0);
-
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
 
@@ -350,10 +323,7 @@ export function HeroDiorama() {
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const pointer = { x: 0, y: 0 };
-    let currentPose: CameraPose = {
-      ...CAMERA_POSES.arrival,
-      target: [...CAMERA_POSES.arrival.target] as Vec3,
-    };
+    let currentPose: CameraPose = { ...CAMERA_POSES.arrival, target: [...CAMERA_POSES.arrival.target] as Vec3 };
     let frame = 0;
     let lastTime = performance.now();
 
@@ -373,19 +343,16 @@ export function HeroDiorama() {
       pointer.x = clamp(((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1, -1, 1);
       pointer.y = clamp(((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 - 1, -1, 1);
     };
-
     const handlePointerLeave = () => {
       pointer.x = 0;
       pointer.y = 0;
     };
-
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("blur", handlePointerLeave);
 
     const render = (now: number) => {
       const delta = Math.min(50, Math.max(0, now - lastTime));
       lastTime = now;
-
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.max(1, Math.round(canvas.clientWidth * dpr));
       const height = Math.max(1, Math.round(canvas.clientHeight * dpr));
@@ -397,16 +364,13 @@ export function HeroDiorama() {
 
       const progress = getTraversalProgress();
       const focused = document.querySelector(".floating-clinic-card:hover, .floating-clinic-card:focus-within") !== null;
-      const basePose = focused
-        ? CAMERA_POSES.focus
-        : interpolatePose(CAMERA_POSES.arrival, CAMERA_POSES.overview, progress);
+      const basePose = focused ? CAMERA_POSES.focus : interpolatePose(CAMERA_POSES.arrival, CAMERA_POSES.overview, progress);
       const motionScale = reducedMotion.matches ? 0 : 1;
       const targetPose: CameraPose = {
         ...basePose,
         yaw: basePose.yaw + pointer.x * 0.055 * motionScale,
         pitch: clamp(basePose.pitch - pointer.y * 0.035 * motionScale, 0.08, 0.30),
       };
-
       const smoothing = 1 - Math.pow(0.001, delta / (focused ? 150 : 280));
       currentPose = {
         yaw: lerp(currentPose.yaw, targetPose.yaw, smoothing),
@@ -422,8 +386,7 @@ export function HeroDiorama() {
       canvas.dataset.cameraDistance = currentPose.distance.toFixed(3);
 
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      gl.uniform1f(timeLocation, now * 0.001);
-
+      gl.uniform1f(timeLocation, reducedMotion.matches ? 0 : now * 0.001);
       const eye: Vec3 = [
         currentPose.target[0] + Math.sin(currentPose.yaw) * Math.cos(currentPose.pitch) * currentPose.distance,
         currentPose.target[1] + Math.sin(currentPose.pitch) * currentPose.distance,
