@@ -27,6 +27,10 @@ Every published clinic has one canonical hero and five guest-visible semantic su
 
 `Edit` is owner-only. The hidden state of an Edit button is never authorization. Canonical ownership and authenticated identity must enforce owner mutations.
 
+## Booking invariant
+
+Availability shown to customers is advisory until trusted booking creation re-checks authoritative clinic rules and durable occupancy. Never equate a rendered slot with a confirmed booking.
+
 ## Canonical questions
 
 Before changing a data field: who owns its meaning?
