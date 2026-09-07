@@ -21,6 +21,12 @@ const clinic = {
 
 const tabs = ["Profile", "Services", "Booking", "About", "Contact"];
 
+export function generateStaticParams() {
+  return [{ clinicId: "northstar" }];
+}
+
+export const dynamicParams = false;
+
 export default async function ClinicPage({ params }: { params: Promise<{ clinicId: string }> }) {
   await params;
 
