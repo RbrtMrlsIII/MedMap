@@ -13,6 +13,7 @@ test.describe("MedMap spatial Hero", () => {
     await expect(page.locator(".map-canvas")).toBeVisible();
     await expect(page.locator(".hero-environment")).toBeVisible();
     await expect(page.locator(".floating-clinic-card")).toBeVisible();
+    await expect(page.getByTestId("hero-mesh-canvas")).toHaveAttribute("data-webgl", "active");
   });
 
   test("enters the canonical clinic public surface", async ({ page }) => {
