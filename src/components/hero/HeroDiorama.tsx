@@ -11,14 +11,21 @@ type MeshSpec = {
 };
 
 const MESHES: MeshSpec[] = [
+  // Arrival plane and clinic podium.
   { center: [0, -0.35, 0.35], size: [7.4, 0.3, 4.6], color: [0.10, 0.24, 0.28] },
   { center: [0.35, -0.12, 0.05], size: [2.4, 0.18, 2.15], color: [0.18, 0.40, 0.46] },
+
+  // Featured clinic mass with two quieter supporting masses.
   { center: [-1.8, 0.85, -0.4], size: [1.15, 1.7, 1.15], color: [0.48, 0.78, 0.84] },
   { center: [0.35, 1.2, 0.05], size: [1.35, 2.4, 1.35], color: [0.66, 0.88, 0.91] },
   { center: [2.1, 0.62, -0.2], size: [0.95, 1.25, 0.95], color: [0.36, 0.68, 0.75] },
+
+  // Front-facing entrance portal. It reads before the card text does.
   { center: [-0.4, 0.78, -0.72], size: [0.16, 1.78, 0.18], color: [0.42, 0.83, 0.90] },
   { center: [1.1, 0.78, -0.72], size: [0.16, 1.78, 0.18], color: [0.42, 0.83, 0.90] },
   { center: [0.35, 1.66, -0.72], size: [1.66, 0.16, 0.18], color: [0.52, 0.92, 0.96] },
+
+  // Landmark beacon and restrained skyline silhouettes.
   { center: [2.85, 0.55, 0.7], size: [0.28, 1.7, 0.28], color: [0.28, 0.66, 0.74] },
   { center: [-3.1, 0.32, 1.6], size: [0.9, 0.95, 0.9], color: [0.12, 0.28, 0.33] },
   { center: [-2.05, 0.45, 1.75], size: [0.72, 1.2, 0.72], color: [0.14, 0.32, 0.37] },
@@ -86,10 +93,10 @@ function multiply(a: Float32Array, b: Float32Array) {
   for (let column = 0; column < 4; column += 1) {
     for (let row = 0; row < 4; row += 1) {
       out[column * 4 + row] =
-        a[row] * b[column * 4] +
-        a[4 + row] * b[column * 4 + 1] +
-        a[8 + row] * b[column * 4 + 2] +
-        a[12 + row] * b[column * 4 + 3];
+        a[0 * 4 + row] * b[column * 4 + 0] +
+        a[1 * 4 + row] * b[column * 4 + 1] +
+        a[2 * 4 + row] * b[column * 4 + 2] +
+        a[3 * 4 + row] * b[column * 4 + 3];
     }
   }
   return out;
@@ -146,6 +153,7 @@ function buildBox(center: Vec3, size: Vec3, color: [number, number, number]) {
     color.map((value) => value * 0.9) as [number, number, number],
     color.map((value) => value * 0.74) as [number, number, number],
   ];
+
   const vertices = [
     [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],
     [x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0],
@@ -176,9 +184,6 @@ export function HeroDiorama() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    canvas.dataset.meshCount = String(MESHES.length);
-    canvas.dataset.meshTriangles = String(MESHES.length * 12);
-
     const gl = canvas.getContext("webgl2", { alpha: true, antialias: true });
     if (!gl) {
       canvas.dataset.webgl = "unavailable";
@@ -206,6 +211,9 @@ export function HeroDiorama() {
       box.indices.forEach((index) => indexData.push(index + vertexOffset));
       vertexOffset += box.vertices.length;
     }
+
+    canvas.dataset.meshCount = String(MESHES.length);
+    canvas.dataset.meshTriangles = String(indexData.length / 3);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionData), gl.STATIC_DRAW);
@@ -242,6 +250,7 @@ export function HeroDiorama() {
 
       if (!reducedMotion.matches) rotation += 0.0022;
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
       const projection = perspective(Math.PI / 4.5, width / height, 0.1, 100);
       const camera = translate(0, -0.55, -9.2);
       const world = multiply(rotateX(-0.1), rotateY(rotation));
@@ -261,5 +270,15 @@ export function HeroDiorama() {
     };
   }, []);
 
-  return <canvas className="hero-mesh-canvas" data-testid="hero-mesh-canvas" aria-hidden="true" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="hero-mesh-canvas"
+      data-testid="hero-mesh-canvas"
+      data-webgl="unavailable"
+      data-mesh-count="12"
+      data-mesh-triangles="144"
+      aria-hidden="true"
+    />
+  );
 }
