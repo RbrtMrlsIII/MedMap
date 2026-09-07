@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 const VIEWPORT_MATRIX = [
   { name: "small-phone", width: 320, height: 568 },
@@ -14,7 +14,7 @@ const VIEWPORT_MATRIX = [
   { name: "wide-desktop", width: 1728, height: 1117 },
 ];
 
-async function assertViewportIntegrity(page: Parameters<Parameters<typeof test>[1]>[0]["page"], width: number, height: number) {
+async function assertViewportIntegrity(page: Page, width: number, height: number) {
   await page.setViewportSize({ width, height });
   await page.goto("/");
 
@@ -24,7 +24,6 @@ async function assertViewportIntegrity(page: Parameters<Parameters<typeof test>[
 
   const metrics = await page.evaluate(() => ({
     bodyWidth: document.body.scrollWidth,
-    bodyClientWidth: document.body.clientWidth,
     docWidth: document.documentElement.scrollWidth,
     heroWidth: document.querySelector(".hero-environment")?.getBoundingClientRect().width ?? 0,
   }));
