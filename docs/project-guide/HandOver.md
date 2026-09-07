@@ -11,8 +11,9 @@ The MedMap frontend is being built before backend implementation, by deliberate 
 
 - Map-first landing Hero.
 - MapLibre GL JS / WebGL spatial surface with pitched camera.
+- Dedicated authored WebGL2 Hero mesh scene with bounded prototype geometry.
 - Spatial glass-skeuomorphic UI language.
-- Lightweight CSS diorama layer for spatial depth and clinic-like vertical anchors.
+- Lightweight CSS atmosphere/depth layer for spatial hierarchy.
 - Featured clinic Hero card.
 - Clinic route: `/clinics/[clinicId]`.
 - Guest clinic surfaces: Profile, Services, Booking, About, Contact.
@@ -29,7 +30,7 @@ The MedMap frontend is being built before backend implementation, by deliberate 
 - Supabase Storage integration.
 - PayPal subscriptions/webhooks.
 - Live clinic data.
-- Browser/runtime verification evidence.
+- Full degraded-WebGL2 browser verification acceptance for the newest guard test, pending CI run #74.
 
 ## Protected product meaning
 
@@ -47,8 +48,12 @@ Preserve the spatial-glass direction while improving:
 
 ## Verification boundary
 
-The latest branch has repository-native CI configured, but no current passing CI status is claimed from the connected GitHub surface. Vercel has no MedMap project connected in the available account/team, so no hosted preview claim is made.
+The repository now has its first fully successful GitHub Actions workflow: **run #73** on commit `399ea5374b782ba9b620c8b0878f8d74b723f1a2`, with both `typecheck-build` and `browser-verify` successful. The browser suite exercised the landing Hero, authored mesh contract, clinic public navigation, reduced-motion contract, and mobile shell.
+
+A follow-up verification guard was then committed as `ac835a3e0cc69f2fe9614596c3437709789d5c7b`. GitHub Actions **run #74** is currently in progress and adds explicit WebGL2-degraded fallback coverage. Its result is intentionally not pre-claimed.
+
+Vercel has no MedMap project connected in the available account/team, so no hosted preview claim is made.
 
 ## Next action
 
-Continue frontend-only work until the Hero + clinic public surface is visually coherent enough to freeze as the frontend baseline. Then proceed to Firestore/Auth/ownership and availability implementation under the existing contracts.
+Continue frontend-only work until the Hero + clinic public surface is visually coherent enough to freeze as the frontend baseline. The next verification gate is the run #74 degraded-WebGL2 check. After Phase 002 is formally accepted, proceed to Firestore/Auth/ownership and availability implementation under the existing contracts.
