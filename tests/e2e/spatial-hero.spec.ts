@@ -14,24 +14,29 @@ test.describe("MedMap spatial Hero", () => {
     await expect(page.locator(".floating-clinic-card")).toBeVisible();
   });
 
-  test("renders the authored WebGL mesh scene", async ({ page }) => {
+  test("renders the authored WebGL mesh scene", async ({ page }, testInfo) => {
     await page.goto("/");
 
     const meshCanvas = page.getByTestId("hero-mesh-canvas");
     await expect(meshCanvas).toBeVisible();
     await expect(meshCanvas).toHaveAttribute("data-webgl", "active");
+
+    await testInfo.attach("spatial-hero-desktop", {
+      body: await page.screenshot({ fullPage: false }),
+      contentType: "image/png",
+    });
   });
 
   test("enters the canonical clinic public surface", async ({ page }) => {
     await page.goto("/clinics/northstar");
 
     await expect(page.getByRole("heading", { name: "Northstar Family Clinic" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Profile" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Services" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Booking" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "About" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Contact" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Edit" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Profile", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Services", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Booking", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "About", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Contact", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Edit", exact: true })).toHaveCount(0);
   });
 
   test("ships the reduced-motion CSS contract", async ({ page }) => {
@@ -48,5 +53,22 @@ test.describe("MedMap spatial Hero", () => {
     );
 
     expect(reducedMotionRuleExists).toBeTruthy();
+  });
+
+  test("keeps the spatial shell usable at mobile width", async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+
+    await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
+    await expect(page.getByTestId("hero-mesh-canvas")).toBeVisible();
+
+    const bodyWidth = await page.locator("body").evaluate((body) => body.scrollWidth);
+    expect(bodyWidth).toBeLessThanOrEqual(390);
+
+    await testInfo.attach("spatial-hero-mobile", {
+      body: await page.screenshot({ fullPage: false }),
+      contentType: "image/png",
+    });
   });
 });
