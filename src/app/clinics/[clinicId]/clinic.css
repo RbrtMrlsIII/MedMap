@@ -1,0 +1,52 @@
+.clinic-page { min-height: 100vh; padding: 22px; background: linear-gradient(145deg, #dcebf0, #eef8fa 58%, #cfe2e7); color: #102a33; }
+.clinic-hero { position: relative; max-width: 1180px; margin: 0 auto; padding: 26px; border-radius: 32px; overflow: hidden; }
+.clinic-hero-glow { position:absolute; width:420px; height:420px; right:-130px; top:-170px; border-radius:50%; background: radial-gradient(circle, rgba(118,221,240,.34), transparent 66%); pointer-events:none; }
+.clinic-hero-top, .clinic-hero-identity, .clinic-hero-actions { position: relative; z-index: 1; }
+.clinic-hero-top { display:flex; justify-content:space-between; gap:20px; align-items:center; }
+.back-link { font-size:12px; color:#58727b; }
+.clinic-status { display:inline-flex; gap:9px; align-items:center; padding:8px 10px; border-radius:12px; background:rgba(255,255,255,.46); font-size:10px; text-transform:uppercase; letter-spacing:.1em; }
+.clinic-hero-identity { display:flex; gap:18px; align-items:center; margin-top:76px; }
+.clinic-hero-identity h1 { font-size:clamp(42px, 6vw, 78px); letter-spacing:-.06em; margin:0 0 8px; line-height:.96; }
+.clinic-hero-identity p:not(.eyebrow) { margin:0 0 10px; color:#5c737b; font-size:15px; }
+.clinic-avatar.large { width:72px; height:72px; border-radius:22px; font-size:16px; flex:0 0 auto; box-shadow:0 18px 40px rgba(5,42,53,.12); }
+.clinic-location { color:#2e7e8b; font-size:12px; }
+.clinic-hero-actions { display:flex; gap:10px; margin-top:28px; }
+.hero-action, .soft-action { display:inline-flex; align-items:center; justify-content:center; border-radius:15px; padding:12px 15px; font-size:12px; }
+.hero-action { background:#0a2029; color:#fff; }
+.soft-action { background:rgba(255,255,255,.52); border:1px solid rgba(19,49,58,.08); }
+.clinic-tabs { position:sticky; top:14px; z-index:10; max-width:760px; margin:18px auto 24px; padding:8px; border-radius:18px; display:flex; gap:5px; justify-content:center; }
+.clinic-tabs a { padding:10px 14px; border-radius:11px; font-size:11px; color:#48636c; }
+.clinic-tabs a:hover { background:rgba(255,255,255,.56); }
+.clinic-section-grid { max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.clinic-section { padding:22px; border-radius:24px; scroll-margin-top:100px; }
+.clinic-section h2 { margin:0 0 16px; font-size:30px; letter-spacing:-.04em; }
+.profile-facts, .contact-list { display:grid; gap:10px; }
+.profile-facts > div, .contact-list > div { display:flex; justify-content:space-between; gap:18px; padding:12px 14px; border-radius:15px; background:rgba(255,255,255,.44); }
+.profile-facts span, .contact-list span { color:#74878e; font-size:11px; }
+.profile-facts strong, .contact-list strong { text-align:right; font-size:12px; }
+.service-list { display:grid; gap:8px; }
+.service-row { display:flex; justify-content:space-between; gap:18px; padding:13px 14px; border-radius:15px; background:rgba(255,255,255,.44); }
+.service-row > div:first-child { display:grid; gap:4px; }
+.service-row strong { font-size:12px; }
+.service-row span { font-size:10px; color:#74878e; }
+.service-side { display:grid; gap:4px; text-align:right; }
+.service-side span { color:#1d414b; font-weight:800; }
+.service-side small { color:#2f8b95; font-size:9px; }
+.booking-placeholder { background:linear-gradient(145deg, rgba(246,253,255,.8), rgba(202,236,244,.5)); }
+.booking-placeholder p, .body-copy { color:#637880; font-size:13px; line-height:1.65; }
+.booking-placeholder button { border:0; padding:10px 13px; border-radius:12px; background:rgba(8,31,40,.6); color:#dbecef; font-size:11px; }
+.owner-note { max-width:1180px; margin:14px auto 0; padding:17px 18px; border-radius:20px; display:grid; grid-template-columns:auto 1fr; gap:4px 12px; align-items:center; }
+.owner-note > span { font-size:9px; letter-spacing:.15em; color:#73868d; font-weight:800; }
+.owner-note strong { font-size:12px; }
+.owner-note p { grid-column:2; margin:0; color:#71838a; font-size:11px; }
+
+@media (max-width: 800px) {
+  .clinic-page { padding:12px; }
+  .clinic-hero { padding:19px; }
+  .clinic-hero-identity { margin-top:46px; align-items:flex-start; }
+  .clinic-hero-identity h1 { font-size:48px; }
+  .clinic-tabs { justify-content:flex-start; overflow-x:auto; }
+  .clinic-section-grid { grid-template-columns:1fr; }
+  .owner-note { grid-template-columns:1fr; }
+  .owner-note p { grid-column:auto; }
+}
