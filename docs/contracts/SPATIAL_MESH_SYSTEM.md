@@ -13,6 +13,9 @@ MapLibre GL JS
 WebGL mesh scene
   = authored spatial environment, landmark geometry, depth, lighting cues
 
+Spatial camera rig
+  = presentation-only POV, focus transitions, bounded traversal
+
 HTML / React
   = accessible labels, navigation, search, clinic semantics, actions
 
@@ -66,9 +69,36 @@ These are prototype budgets, not final production limits. Raise them only with m
 
 ## Camera and composition
 
-The authored mesh scene uses its own camera transform and is visually coordinated with the MapLibre pitched map layer.
+The authored mesh scene uses a dedicated spatial camera rig and is visually coordinated with the MapLibre pitched map layer.
 
 The two cameras are not treated as one shared domain state. Synchronization is presentation-only.
+
+The spatial camera must use named bounded poses rather than arbitrary per-frame transforms. The initial pose set is:
+
+- `arrival`: canonical Hero opening composition;
+- `focus`: featured-clinic emphasis composition;
+- `overview`: wider discovery composition for traversal.
+
+Each pose declares orientation, distance, and look-at target. A newer requested pose replaces the previous target and the camera damps toward it, so transitions remain interruptible and do not depend on a fixed frame count.
+
+## Traversal
+
+The initial traversal model is scroll-driven and bounded to the Hero section. Scroll position selects a point between the `arrival` and `overview` poses. Pointer position may add a small secondary look offset, but it must not be required to perceive or understand the scene.
+
+Future free-traversal experiments may add bounded orbit, pan, or dolly controls. Such controls must not capture or block semantic page actions.
+
+## Animation
+
+Ambient mesh animation may provide subtle authored life, such as restrained emissive pulsing.
+
+Camera motion is state-driven and damped. Mesh buffers remain static during the frame loop.
+
+When `prefers-reduced-motion: reduce` is active:
+
+- continuous camera parallax is disabled;
+- continuous emissive pulsing is disabled;
+- CSS transition effects are disabled by the existing Hero contract;
+- the scene remains perceivable in a stable pose.
 
 ## Accessibility / fallback
 
@@ -80,12 +110,38 @@ When WebGL2 is unavailable, the application must retain the map, clinic cards, n
 
 ## Verification obligations
 
+### Geometry
+
 - TypeScript/build passes.
-- Playwright confirms WebGL2 initialization in the supported browser target.
-- Playwright confirms the mesh canvas is present without replacing semantic clinic controls.
-- Reduced-motion mode prevents continuous scene rotation.
+- Playwright verifies WebGL2 initialization in the supported browser target.
+- Playwright verifies declared mesh count and triangle budget.
+
+### Camera POV
+
+- Playwright verifies the initial `arrival` POV.
+- Focus of the featured clinic moves the spatial camera into `focus` without replacing the semantic control.
+- Camera yaw, pitch, and distance remain inside declared bounds.
+
+### Transition
+
+- A focus transition must visibly change camera state through the published `data-camera-pov`/pose attributes.
+- New target state interrupts the previous target rather than queueing unbounded animation work.
+
+### Traversal
+
+- Scroll traversal changes `data-camera-progress` within `[0, 1]`.
+- Traversal enters `overview` after the defined threshold.
+- Camera distance stays between the declared arrival/focus/overview bounds.
+
+### Motion reduction
+
+- Reduced-motion mode prevents continuous scene rotation and emissive pulsing.
+- Semantic HTML controls remain usable independently of the canvas.
+
+### Visual
+
 - Responsive screenshots are reviewed for desktop and narrow mobile layouts.
-- Mesh budgets are documented before importing larger authored assets.
+- Visual review checks silhouette, entrance readability, horizon, focal hierarchy, occlusion, and mobile stacking.
 
 ## Non-goals
 
