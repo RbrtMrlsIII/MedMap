@@ -62,7 +62,12 @@ test.describe("MedMap spatial Hero", () => {
 
     await featuredLink.focus();
     await expect(meshCanvas).toHaveCSS("filter", /saturate\(1\.08\)/);
-    await expect(page.locator(".floating-clinic-card")).toHaveCSS("transform", /translateZ\(48px\)/);
+
+    const depth = await page.locator(".floating-clinic-card").evaluate((element) => {
+      const transform = getComputedStyle(element).transform;
+      return transform === "none" ? 0 : new DOMMatrix(transform).m43;
+    });
+    expect(depth).toBeGreaterThan(45);
     await expect(featuredLink).toBeFocused();
   });
 
