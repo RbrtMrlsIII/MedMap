@@ -68,12 +68,27 @@ Trusted application boundary
 9. [x] Reconcile clinic-page tab/visibility law.
 10. [x] Add clinic-page surface contract and navigation ownership model.
 11. [x] Reconcile assistant guide, policy, skill wiring, and product knowledge with clinic-surface governance.
+12. [x] Define the first spatial 3D glass Hero environment contract.
 
-## Phase 002 — Clinic identity and supply
+## Phase 002 — Spatial frontend prototype
+
+1. [x] Spatial Hero environment with MapLibre/WebGL scene.
+2. [x] Glass-skeuomorphic global navigation shell.
+3. [x] Primary discovery Hero and search affordance.
+4. [x] Featured clinic Hero card using public clinic concepts.
+5. [x] Spatial status HUD and visual hierarchy.
+6. [x] Responsive/reduced-motion behavior.
+7. [x] Public clinic prototype route with Profile, Services, Booking, About, Contact.
+8. [ ] Browser visual verification of Hero and clinic route.
+9. [ ] Visual polish pass after observed browser evidence.
+
+**Backend remains intentionally parked during this phase.** Prototype data and UI may be used to refine the experience, but MUST NOT imply durable booking, ownership, subscription, or availability behavior.
+
+## Phase 003 — Clinic identity and supply backend
 
 1. Clinic registration and authenticated ownership.
 2. Clinic publication/active state.
-3. Clinic hero and profile identity.
+3. Clinic hero and profile identity persistence.
 4. Profile tab: logo, background, name, basic information, links, service summary.
 5. Services tab: enabled public services/treatments, duration, price-state, bookability.
 6. About tab: public clinic bio and approved descriptive content.
@@ -82,7 +97,7 @@ Trusted application boundary
 9. Owner authorization tests: guest cannot access or mutate Edit.
 10. Media references and Supabase Storage integration.
 
-## Phase 003 — Clinic scheduling engine
+## Phase 004 — Clinic scheduling engine
 
 1. Weekly open/closed schedule.
 2. Multiple opening intervals per day.
@@ -96,7 +111,7 @@ Trusted application boundary
 10. Availability calculation implementation.
 11. Owner edits invalidate or recheck stale availability.
 
-## Phase 004 — Customer discovery
+## Phase 005 — Customer discovery
 
 1. Map-first landing experience.
 2. MapLibre 3D camera and clinic markers.
@@ -108,7 +123,7 @@ Trusted application boundary
 8. Availability-aware Booking tab.
 9. Responsive mobile spatial navigation.
 
-## Phase 005 — Booking correctness
+## Phase 006 — Booking correctness
 
 1. Trusted booking-creation operation.
 2. Authoritative re-check of clinic, service, schedule, exception, duration, interval, and capacity.
@@ -118,7 +133,7 @@ Trusted application boundary
 6. Failure-path UX for a slot lost during submission.
 7. Independent Firestore verification of durable booking state.
 
-## Phase 006 — Clinic operations
+## Phase 007 — Clinic operations
 
 1. Owner booking management.
 2. Calendar occupancy view.
@@ -129,7 +144,7 @@ Trusted application boundary
 7. Publication preview from owner perspective.
 8. Audit/reconciliation for material scheduling changes.
 
-## Phase 007 — Clinic subscriptions
+## Phase 008 — Clinic subscriptions
 
 1. Clinic plan model.
 2. Server-owned PayPal subscription correlation.
@@ -139,7 +154,7 @@ Trusted application boundary
 6. Feature gating from authoritative subscription state.
 7. Live PayPal evidence when credentials/environment permit.
 
-## Phase 008 — Spatial experience and polish
+## Phase 009 — Spatial experience and polish
 
 1. Base style and camera system.
 2. 3D building/terrain enhancement where useful.
@@ -150,7 +165,7 @@ Trusted application boundary
 7. Keyboard/accessibility verification.
 8. Mobile map/list transition.
 
-## Phase 009 — Verification and release
+## Phase 010 — Verification and release
 
 1. TypeScript/build checks.
 2. Contract tests.
