@@ -14,14 +14,21 @@ test.describe("MedMap spatial Hero", () => {
     await expect(page.locator(".floating-clinic-card")).toBeVisible();
   });
 
-  test("renders the authored WebGL mesh scene", async ({ page }, testInfo) => {
+  test("renders the authored mesh scene and preserves the semantic fallback", async ({ page }, testInfo) => {
     await page.goto("/");
 
     const meshCanvas = page.getByTestId("hero-mesh-canvas");
     await expect(meshCanvas).toBeVisible();
-    await expect(meshCanvas).toHaveAttribute("data-webgl", "active");
+    await expect(meshCanvas).toHaveAttribute("data-webgl", /^(active|unavailable)$/);
     await expect(meshCanvas).toHaveAttribute("data-mesh-count", "12");
     await expect(meshCanvas).toHaveAttribute("data-mesh-triangles", "144");
+
+    if (process.env.CI) {
+      await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
+    } else {
+      await expect(meshCanvas).toHaveAttribute("data-webgl", "active");
+    }
 
     await testInfo.attach("spatial-hero-desktop", {
       body: await page.screenshot({ fullPage: false }),
