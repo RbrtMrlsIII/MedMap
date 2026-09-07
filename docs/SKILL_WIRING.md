@@ -8,6 +8,7 @@ This is the navigation map, not a source of product authority. `PRODUCT_LAW.md` 
 | Firestore domain state | `DOMAIN_MODEL.md` | Firebase/Firestore data skill | independent read-back |
 | Availability | `BOOKING_AVAILABILITY.md` | booking/availability skill | contract tests + race tests |
 | MapLibre UI | `MAP_SPATIAL.md` | map/frontend skill | browser visual/interaction check |
+| Spatial Hero environment | `HERO_ENVIRONMENT.md` | spatial-hero/frontend skill | browser visual + reduced-motion check |
 | Clinic configuration | `CLINIC_PROFILE_SURFACE.md` + `DOMAIN_MODEL.md` | clinic-management skill | configuration round-trip + authorization check |
 | Clinic page guest tabs | `CLINIC_PROFILE_SURFACE.md` | clinic-surface/frontend skill | guest tab browser check |
 | Owner-only Edit | `CLINIC_PROFILE_SURFACE.md` | ownership/authorization skill | unauthorized route/write test |
@@ -25,5 +26,6 @@ Every recurring bounded procedure should resolve to a concrete skill before it b
 2. Firestore canonical-state operations;
 3. clinic profile/surface and owner authorization;
 4. MapLibre spatial/frontend implementation;
-5. PayPal webhook boundary;
-6. verification and browser evidence.
+5. spatial Hero environment;
+6. PayPal webhook boundary;
+7. verification and browser evidence.
