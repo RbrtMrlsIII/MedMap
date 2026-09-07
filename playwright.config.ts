@@ -26,7 +26,13 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         launchOptions: {
-          args: ["--enable-webgl", "--ignore-gpu-blocklist", "--use-angle=swiftshader"],
+          args: [
+            "--enable-webgl",
+            "--ignore-gpu-blocklist",
+            "--use-gl=angle",
+            "--use-angle=swiftshader-webgl",
+            "--enable-unsafe-swiftshader",
+          ],
         },
       },
     },
