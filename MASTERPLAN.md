@@ -68,27 +68,27 @@ Trusted application boundary
 9. [x] Reconcile clinic-page tab/visibility law.
 10. [x] Add clinic-page surface contract and navigation ownership model.
 11. [x] Reconcile assistant guide, policy, skill wiring, and product knowledge with clinic-surface governance.
-12. [x] Define the first spatial 3D glass Hero environment contract.
 
-## Phase 002 — Spatial frontend prototype
+## Phase 002 — Spatial frontend prototype — IN PROGRESS
 
-1. [x] Spatial Hero environment with MapLibre/WebGL scene.
-2. [x] Glass-skeuomorphic global navigation shell.
-3. [x] Primary discovery Hero and search affordance.
-4. [x] Featured clinic Hero card using public clinic concepts.
-5. [x] Spatial status HUD and visual hierarchy.
-6. [x] Responsive/reduced-motion behavior.
-7. [x] Public clinic prototype route with Profile, Services, Booking, About, Contact.
-8. [ ] Browser visual verification of Hero and clinic route.
-9. [ ] Visual polish pass after observed browser evidence.
+1. [x] Map-first landing Hero.
+2. [x] MapLibre pitched spatial camera.
+3. [x] Spatial glass-skeuomorphic shell.
+4. [x] Featured clinic Hero presentation.
+5. [x] Lightweight CSS spatial diorama/depth layer.
+6. [x] Clinic public route prototype.
+7. [x] Guest surfaces: Profile, Services, Booking, About, Contact.
+8. [x] Owner-only Edit boundary represented in product model and guest surface.
+9. [ ] Refine Hero scene composition and spatial focus transitions.
+10. [ ] Responsive mobile spatial composition.
+11. [ ] Reduced-motion/degraded-map browser verification.
+12. [ ] Freeze visual frontend baseline after browser evidence.
 
-**Backend remains intentionally parked during this phase.** Prototype data and UI may be used to refine the experience, but MUST NOT imply durable booking, ownership, subscription, or availability behavior.
-
-## Phase 003 — Clinic identity and supply backend
+## Phase 003 — Clinic identity and supply
 
 1. Clinic registration and authenticated ownership.
 2. Clinic publication/active state.
-3. Clinic hero and profile identity persistence.
+3. Clinic hero and profile identity.
 4. Profile tab: logo, background, name, basic information, links, service summary.
 5. Services tab: enabled public services/treatments, duration, price-state, bookability.
 6. About tab: public clinic bio and approved descriptive content.
@@ -113,7 +113,7 @@ Trusted application boundary
 
 ## Phase 005 — Customer discovery
 
-1. Map-first landing experience.
+1. Map-first landing experience backed by real clinic data.
 2. MapLibre 3D camera and clinic markers.
 3. Search by service/treatment and location.
 4. Map/list synchronization.
@@ -156,7 +156,7 @@ Trusted application boundary
 
 ## Phase 009 — Spatial experience and polish
 
-1. Base style and camera system.
+1. Approved base style and camera system.
 2. 3D building/terrain enhancement where useful.
 3. Cluster behavior.
 4. Spatial clinic focus transitions.
