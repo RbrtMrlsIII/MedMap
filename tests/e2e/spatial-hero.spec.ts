@@ -27,11 +27,17 @@ test.describe("MedMap spatial Hero", () => {
     await expect(page.getByRole("link", { name: "Edit" })).toHaveCount(0);
   });
 
-  test("exposes the reduced-motion CSS contract", async ({ page }) => {
+  test("ships the reduced-motion CSS contract", async ({ page }) => {
     await page.goto("/");
 
-    const reducedMotionRuleExists = await page.locator("style").evaluateAll((styles) =>
-      styles.some((style) => style.textContent?.includes("prefers-reduced-motion")),
+    const reducedMotionRuleExists = await page.evaluate(() =>
+      Array.from(document.styleSheets).some((sheet) => {
+        try {
+          return Array.from(sheet.cssRules).some((rule) => rule.cssText.includes("prefers-reduced-motion"));
+        } catch {
+          return false;
+        }
+      }),
     );
 
     expect(reducedMotionRuleExists).toBeTruthy();
