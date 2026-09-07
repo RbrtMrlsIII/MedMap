@@ -10,7 +10,8 @@ Keep the spatial experience, domain truth, trusted integrations, and external pa
 Browser
   │
   ├── Next.js / React presentation
-  ├── MapLibre GL JS / WebGL
+  ├── MapLibre GL JS / WebGL geographic layer
+  ├── WebGL2 authored mesh scene
   └── authenticated user interactions
         │
         ▼
@@ -27,14 +28,29 @@ Application boundary
                └── clinic media
 ```
 
+## Spatial rendering responsibilities
+
+The browser spatial layer has two complementary responsibilities:
+
+- **MapLibre GL JS** owns geographic context, viewport/camera interaction, map tiles, markers, and spatial discovery presentation.
+- **WebGL2 mesh scene** owns authored 3D environment geometry used by the Hero, such as clinic forms, spatial landmarks, and depth cues.
+
+These layers may visually overlap but do not share domain authority. Mesh geometry is presentation state only.
+
 ## Browser responsibilities
 
 - Render map and clinic discovery UI.
+- Render the authored WebGL2 mesh Hero where supported.
 - Collect filters and booking requests.
 - Present server-derived availability.
 - Never self-authorize a booking.
 - Never self-activate a subscription.
 - Never expose service credentials.
+- Preserve semantic HTML outside the canvas for critical information and actions.
+
+## WebGL degradation
+
+WebGL2 is an enhancement, not the only carrier of meaning. When unavailable, the application must retain the discovery Hero, clinic identity, controls, and accessible clinic alternatives without requiring the 3D canvas.
 
 ## Firestore responsibilities
 
@@ -58,7 +74,7 @@ PayPal is external event authority. Supabase Edge Functions verify and normalize
 
 ## Rendering strategy
 
-The first visual direction is spatial glass skeuomorphism: translucent panels, depth, restrained blur, spatial hierarchy, and clinical clarity. Decorative depth must never obscure labels, availability, keyboard interaction, or accessible alternatives.
+The visual direction is spatial glass skeuomorphism: translucent panels, depth, restrained blur, spatial hierarchy, authored 3D meshes, and clinical clarity. Decorative depth must never obscure labels, availability, keyboard interaction, or accessible alternatives.
 
 ## Initial application shape
 
@@ -70,6 +86,7 @@ src/
     bookings/                # customer booking surfaces
     clinic/                  # clinic operator surfaces
   components/
+    hero/                    # authored WebGL2 Hero environment
     map/                     # MapLibre components
     discovery/               # filters/results
     booking/                 # calendar/slot UI
