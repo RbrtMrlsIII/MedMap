@@ -97,6 +97,62 @@ export default function HomePage() {
         </div>
 
         <div className="hero-scroll-cue">SCROLL TO DISCOVER <span>↓</span></div>
+
+        <style>{`
+          .hero-mesh-canvas,
+          .hero-orbit-one,
+          .hero-orbit-two,
+          .hero-beacon-one,
+          .hero-beacon-two,
+          .floating-clinic-card {
+            transition: transform 420ms ease, opacity 420ms ease, filter 420ms ease, box-shadow 420ms ease;
+          }
+
+          .hero-environment:has(.floating-clinic-card:hover) .hero-mesh-canvas,
+          .hero-environment:has(.floating-clinic-card:focus-within) .hero-mesh-canvas {
+            transform: scale(1.025) translate3d(-0.8%, -0.4%, 0);
+            filter: saturate(1.08) contrast(1.03);
+          }
+
+          .hero-environment:has(.floating-clinic-card:hover) .hero-orbit-one,
+          .hero-environment:has(.floating-clinic-card:focus-within) .hero-orbit-one {
+            transform: rotateX(67deg) rotateZ(-14deg) translate3d(-14px, -6px, 0);
+            opacity: 0.88;
+          }
+
+          .hero-environment:has(.floating-clinic-card:hover) .hero-orbit-two,
+          .hero-environment:has(.floating-clinic-card:focus-within) .hero-orbit-two {
+            transform: rotateX(67deg) rotateZ(-14deg) translate3d(-9px, -4px, 0);
+            opacity: 0.82;
+          }
+
+          .hero-environment:has(.floating-clinic-card:hover) .hero-beacon-one,
+          .hero-environment:has(.floating-clinic-card:focus-within) .hero-beacon-one {
+            transform: scale(1.18);
+          }
+
+          .hero-environment:has(.floating-clinic-card:hover) .hero-beacon-two,
+          .hero-environment:has(.floating-clinic-card:focus-within) .hero-beacon-two {
+            transform: scale(0.84);
+          }
+
+          .hero-environment:has(.floating-clinic-card:hover) .floating-clinic-card,
+          .hero-environment:has(.floating-clinic-card:focus-within) .floating-clinic-card {
+            transform: perspective(1200px) rotateY(-8deg) rotateX(4deg) translateZ(48px) translateY(-4px);
+            box-shadow: 0 56px 132px rgba(0, 20, 28, 0.34);
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .hero-mesh-canvas,
+            .hero-orbit-one,
+            .hero-orbit-two,
+            .hero-beacon-one,
+            .hero-beacon-two,
+            .floating-clinic-card {
+              transition: none;
+            }
+          }
+        `}</style>
       </section>
 
       <section className="discovery-section">
