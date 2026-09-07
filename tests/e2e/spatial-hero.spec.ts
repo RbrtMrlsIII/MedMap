@@ -20,6 +20,8 @@ test.describe("MedMap spatial Hero", () => {
     const meshCanvas = page.getByTestId("hero-mesh-canvas");
     await expect(meshCanvas).toBeVisible();
     await expect(meshCanvas).toHaveAttribute("data-webgl", "active");
+    await expect(meshCanvas).toHaveAttribute("data-mesh-count", "12");
+    await expect(meshCanvas).toHaveAttribute("data-mesh-triangles", "144");
 
     await testInfo.attach("spatial-hero-desktop", {
       body: await page.screenshot({ fullPage: false }),
