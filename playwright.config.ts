@@ -31,7 +31,8 @@ export default defineConfig({
           args: [
             "--enable-gpu",
             "--ignore-gpu-blocklist",
-            "--use-gl=desktop",
+            "--use-gl=angle",
+            "--use-angle=gl",
           ],
         },
       },
