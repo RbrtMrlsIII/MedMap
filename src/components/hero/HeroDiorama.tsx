@@ -3,51 +3,86 @@
 import { useEffect, useRef } from "react";
 
 type Vec3 = [number, number, number];
+type Color = [number, number, number];
 
 type MeshSpec = {
   center: Vec3;
   size: Vec3;
-  color: [number, number, number];
+  color: Color;
+  emissive?: number;
 };
 
 const MESHES: MeshSpec[] = [
-  // Arrival plane and clinic podium.
-  { center: [0, -0.35, 0.35], size: [7.4, 0.3, 4.6], color: [0.10, 0.24, 0.28] },
-  { center: [0.35, -0.12, 0.05], size: [2.4, 0.18, 2.15], color: [0.18, 0.40, 0.46] },
+  // Spatial arrival field.
+  { center: [0, -0.34, 0.2], size: [8.6, 0.28, 5.4], color: [0.08, 0.19, 0.23] },
+  { center: [0.15, -0.12, -0.08], size: [3.7, 0.18, 2.6], color: [0.12, 0.34, 0.40] },
+  { center: [0.15, -0.015, -1.22], size: [0.62, 0.05, 2.0], color: [0.36, 0.66, 0.71], emissive: 0.08 },
 
-  // Featured clinic mass with two quieter supporting masses.
-  { center: [-1.8, 0.85, -0.4], size: [1.15, 1.7, 1.15], color: [0.48, 0.78, 0.84] },
-  { center: [0.35, 1.2, 0.05], size: [1.35, 2.4, 1.35], color: [0.66, 0.88, 0.91] },
-  { center: [2.1, 0.62, -0.2], size: [0.95, 1.25, 0.95], color: [0.36, 0.68, 0.75] },
+  // Featured clinic mass, stepped roofline, and lobby canopy.
+  { center: [-0.7, 0.88, -0.10], size: [1.85, 1.85, 1.55], color: [0.50, 0.78, 0.84] },
+  { center: [0.68, 1.18, 0.18], size: [1.22, 2.45, 1.18], color: [0.67, 0.89, 0.92] },
+  { center: [0.02, 0.78, -0.86], size: [1.52, 0.18, 0.30], color: [0.42, 0.82, 0.88], emissive: 0.18 },
 
-  // Front-facing entrance portal. It reads before the card text does.
-  { center: [-0.4, 0.78, -0.72], size: [0.16, 1.78, 0.18], color: [0.42, 0.83, 0.90] },
-  { center: [1.1, 0.78, -0.72], size: [0.16, 1.78, 0.18], color: [0.42, 0.83, 0.90] },
-  { center: [0.35, 1.66, -0.72], size: [1.66, 0.16, 0.18], color: [0.52, 0.92, 0.96] },
+  // Arrival portal and illuminated entrance spine.
+  { center: [-0.72, 0.82, -1.05], size: [0.15, 1.72, 0.18], color: [0.37, 0.78, 0.86], emissive: 0.14 },
+  { center: [0.72, 0.82, -1.05], size: [0.15, 1.72, 0.18], color: [0.37, 0.78, 0.86], emissive: 0.14 },
+  { center: [0, 1.66, -1.05], size: [1.58, 0.15, 0.18], color: [0.53, 0.92, 0.96], emissive: 0.22 },
 
-  // Landmark beacon and restrained skyline silhouettes.
-  { center: [2.85, 0.55, 0.7], size: [0.28, 1.7, 0.28], color: [0.28, 0.66, 0.74] },
-  { center: [-3.1, 0.32, 1.6], size: [0.9, 0.95, 0.9], color: [0.12, 0.28, 0.33] },
-  { center: [-2.05, 0.45, 1.75], size: [0.72, 1.2, 0.72], color: [0.14, 0.32, 0.37] },
-  { center: [2.85, 0.36, 1.72], size: [0.88, 1.02, 0.88], color: [0.12, 0.28, 0.33] },
+  // Landmark beacon and distant city masses.
+  { center: [2.55, 0.62, 0.75], size: [0.24, 2.02, 0.24], color: [0.29, 0.67, 0.76], emissive: 0.25 },
+  { center: [-2.35, 0.44, 1.55], size: [1.05, 1.55, 0.92], color: [0.10, 0.25, 0.29] },
+  { center: [2.55, 0.43, 1.68], size: [1.00, 1.62, 0.92], color: [0.10, 0.25, 0.29] },
 ];
 
 const VERTEX_SHADER = `#version 300 es
 in vec3 a_position;
 in vec3 a_color;
+in vec3 a_normal;
+in float a_emissive;
 uniform mat4 u_matrix;
 out vec3 v_color;
+out vec3 v_normal;
+out vec3 v_position;
+out float v_emissive;
 void main() {
-  gl_Position = u_matrix * vec4(a_position, 1.0);
+  vec4 worldPosition = vec4(a_position, 1.0);
+  gl_Position = u_matrix * worldPosition;
+  v_position = worldPosition.xyz;
+  v_normal = a_normal;
   v_color = a_color;
+  v_emissive = a_emissive;
 }`;
 
 const FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 in vec3 v_color;
+in vec3 v_normal;
+in vec3 v_position;
+in float v_emissive;
+uniform float u_time;
 out vec4 outColor;
+
 void main() {
-  outColor = vec4(v_color, 0.84);
+  vec3 n = normalize(v_normal);
+  vec3 lightA = normalize(vec3(-0.45, 0.90, 0.55));
+  vec3 lightB = normalize(vec3(0.60, 0.30, -0.40));
+  float diffuseA = max(dot(n, lightA), 0.0);
+  float diffuseB = max(dot(n, lightB), 0.0);
+  float ambient = 0.34;
+
+  vec3 lit = v_color * (ambient + diffuseA * 0.68 + diffuseB * 0.18);
+  float pulse = 0.92 + 0.08 * sin(u_time * 2.4);
+  lit += v_color * (v_emissive * pulse * 1.45);
+
+  float edge = pow(1.0 - max(dot(n, vec3(0.0, 0.0, 1.0)), 0.0), 2.0);
+  lit += vec3(0.18, 0.34, 0.38) * edge * 0.20;
+
+  float depth = clamp((v_position.z + 3.5) / 7.5, 0.0, 1.0);
+  float fog = smoothstep(0.0, 1.0, depth) * 0.30;
+  vec3 fogColor = vec3(0.03, 0.12, 0.15);
+  lit = mix(lit, fogColor, fog);
+
+  outColor = vec4(lit, 0.90);
 }`;
 
 function createShader(gl: WebGL2RenderingContext, type: number, source: string) {
@@ -133,7 +168,7 @@ function translate(x: number, y: number, z: number) {
   ]);
 }
 
-function buildBox(center: Vec3, size: Vec3, color: [number, number, number]) {
+function buildBox(center: Vec3, size: Vec3, color: Color, emissive = 0) {
   const [cx, cy, cz] = center;
   const [sx, sy, sz] = size;
   const hx = sx / 2;
@@ -145,36 +180,58 @@ function buildBox(center: Vec3, size: Vec3, color: [number, number, number]) {
   const y1 = cy + hy;
   const z0 = cz - hz;
   const z1 = cz + hz;
-  const faceColors = [
+
+  const faceColors: Color[] = [
     color,
-    color.map((value) => value * 0.82) as [number, number, number],
-    color.map((value) => value * 0.66) as [number, number, number],
-    color.map((value) => Math.min(1, value * 1.12)) as [number, number, number],
-    color.map((value) => value * 0.9) as [number, number, number],
-    color.map((value) => value * 0.74) as [number, number, number],
+    color.map((value) => value * 0.80) as Color,
+    color.map((value) => value * 0.64) as Color,
+    color.map((value) => Math.min(1, value * 1.12)) as Color,
+    color.map((value) => value * 0.90) as Color,
+    color.map((value) => value * 0.74) as Color,
+  ];
+  const faceNormals: Vec3[] = [
+    [0, 0, 1], [0, 0, -1], [0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0],
   ];
 
-  const vertices = [
-    [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],
-    [x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0],
-    [x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0],
-    [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1],
-    [x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1],
-    [x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0],
+  const faces: Vec3[][] = [
+    [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]],
+    [[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0]],
+    [[x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0]],
+    [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]],
+    [[x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1]],
+    [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]],
   ];
-  const indices = [
-    0, 1, 2, 0, 2, 3,
-    4, 5, 6, 4, 6, 7,
-    8, 9, 10, 8, 10, 11,
-    12, 13, 14, 12, 14, 15,
-    16, 17, 18, 16, 18, 19,
-    20, 21, 22, 20, 22, 23,
-  ];
+
+  const vertices: number[] = [];
   const colors: number[] = [];
-  faceColors.forEach((faceColor) => {
-    for (let i = 0; i < 4; i += 1) colors.push(...faceColor);
+  const normals: number[] = [];
+  const emissiveData: number[] = [];
+
+  faces.forEach((face, faceIndex) => {
+    const faceColor = faceColors[faceIndex];
+    const normal = faceNormals[faceIndex];
+    face.forEach((vertex) => {
+      vertices.push(...vertex);
+      colors.push(...faceColor);
+      normals.push(...normal);
+      emissiveData.push(emissive);
+    });
   });
-  return { vertices, indices, colors };
+
+  return {
+    vertices,
+    colors,
+    normals,
+    emissive: emissiveData,
+    indices: [
+      0, 1, 2, 0, 2, 3,
+      4, 5, 6, 4, 6, 7,
+      8, 9, 10, 8, 10, 11,
+      12, 13, 14, 12, 14, 15,
+      16, 17, 18, 16, 18, 19,
+      20, 21, 22, 20, 22, 23,
+    ],
+  };
 }
 
 export function HeroDiorama() {
@@ -194,26 +251,40 @@ export function HeroDiorama() {
     const program = createProgram(gl);
     const positionLocation = gl.getAttribLocation(program, "a_position");
     const colorLocation = gl.getAttribLocation(program, "a_color");
+    const normalLocation = gl.getAttribLocation(program, "a_normal");
+    const emissiveLocation = gl.getAttribLocation(program, "a_emissive");
     const matrixLocation = gl.getUniformLocation(program, "u_matrix");
+    const timeLocation = gl.getUniformLocation(program, "u_time");
+
     const positionBuffer = gl.createBuffer();
     const colorBuffer = gl.createBuffer();
+    const normalBuffer = gl.createBuffer();
+    const emissiveBuffer = gl.createBuffer();
     const indexBuffer = gl.createBuffer();
-    if (!positionBuffer || !colorBuffer || !indexBuffer) throw new Error("Unable to create WebGL buffers");
+    if (!positionBuffer || !colorBuffer || !normalBuffer || !emissiveBuffer || !indexBuffer) {
+      throw new Error("Unable to create WebGL buffers");
+    }
 
     const positionData: number[] = [];
     const colorData: number[] = [];
+    const normalData: number[] = [];
+    const emissiveData: number[] = [];
     const indexData: number[] = [];
     let vertexOffset = 0;
+
     for (const mesh of MESHES) {
-      const box = buildBox(mesh.center, mesh.size, mesh.color);
-      box.vertices.forEach((vertex) => positionData.push(...vertex));
+      const box = buildBox(mesh.center, mesh.size, mesh.color, mesh.emissive ?? 0);
+      positionData.push(...box.vertices);
       colorData.push(...box.colors);
+      normalData.push(...box.normals);
+      emissiveData.push(...box.emissive);
       box.indices.forEach((index) => indexData.push(index + vertexOffset));
-      vertexOffset += box.vertices.length;
+      vertexOffset += box.vertices.length / 3;
     }
 
     canvas.dataset.meshCount = String(MESHES.length);
     canvas.dataset.meshTriangles = String(indexData.length / 3);
+    canvas.dataset.environmentVersion = "2";
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionData), gl.STATIC_DRAW);
@@ -224,6 +295,16 @@ export function HeroDiorama() {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(colorLocation);
     gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalData), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(normalLocation);
+    gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, emissiveBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(emissiveData), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(emissiveLocation);
+    gl.vertexAttribPointer(emissiveLocation, 1, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
@@ -236,9 +317,10 @@ export function HeroDiorama() {
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0;
-    let rotation = -0.38;
+    let rotation = -0.34;
+    let lastTime = performance.now();
 
-    const render = () => {
+    const render = (now: number) => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.max(1, Math.round(canvas.clientWidth * dpr));
       const height = Math.max(1, Math.round(canvas.clientHeight * dpr));
@@ -248,23 +330,29 @@ export function HeroDiorama() {
         gl.viewport(0, 0, width, height);
       }
 
-      if (!reducedMotion.matches) rotation += 0.0022;
+      const delta = Math.min(32, now - lastTime);
+      lastTime = now;
+      if (!reducedMotion.matches) rotation += delta * 0.000022;
+
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      const projection = perspective(Math.PI / 4.5, width / height, 0.1, 100);
-      const camera = translate(0, -0.55, -9.2);
-      const world = multiply(rotateX(-0.1), rotateY(rotation));
+      const projection = perspective(Math.PI / 4.2, width / height, 0.1, 100);
+      const camera = translate(0, -0.58, -9.4);
+      const world = multiply(rotateX(-0.18), rotateY(rotation));
       const matrix = multiply(projection, multiply(camera, world));
       gl.uniformMatrix4fv(matrixLocation, false, matrix);
+      gl.uniform1f(timeLocation, now * 0.001);
       gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
       frame = window.requestAnimationFrame(render);
     };
 
-    render();
+    render(performance.now());
     return () => {
       window.cancelAnimationFrame(frame);
       gl.deleteBuffer(positionBuffer);
       gl.deleteBuffer(colorBuffer);
+      gl.deleteBuffer(normalBuffer);
+      gl.deleteBuffer(emissiveBuffer);
       gl.deleteBuffer(indexBuffer);
       gl.deleteProgram(program);
     };
@@ -278,6 +366,7 @@ export function HeroDiorama() {
       data-webgl="unavailable"
       data-mesh-count="12"
       data-mesh-triangles="144"
+      data-environment-version="2"
       aria-hidden="true"
     />
   );
