@@ -9,11 +9,17 @@ test.describe("MedMap spatial Hero", () => {
     await expect(page.getByText("Clinic-first", { exact: true })).toBeVisible();
     await expect(page.getByText("Prototype data", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Open clinic" })).toHaveAttribute("href", "/clinics/northstar");
-
     await expect(page.locator(".map-canvas")).toBeVisible();
     await expect(page.locator(".hero-environment")).toBeVisible();
     await expect(page.locator(".floating-clinic-card")).toBeVisible();
-    await expect(page.getByTestId("hero-mesh-canvas")).toHaveAttribute("data-webgl", "active");
+  });
+
+  test("renders the authored WebGL mesh scene", async ({ page }) => {
+    await page.goto("/");
+
+    const meshCanvas = page.getByTestId("hero-mesh-canvas");
+    await expect(meshCanvas).toBeVisible();
+    await expect(meshCanvas).toHaveAttribute("data-webgl", "active");
   });
 
   test("enters the canonical clinic public surface", async ({ page }) => {
