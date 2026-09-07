@@ -15,6 +15,7 @@ The MedMap frontend is being built before backend implementation, by deliberate 
 - Spatial glass-skeuomorphic UI language.
 - Lightweight CSS atmosphere/depth layer for spatial hierarchy.
 - Featured clinic Hero card.
+- Featured-clinic spatial focus transition with keyboard/focus coverage.
 - Clinic route: `/clinics/[clinicId]`.
 - Guest clinic surfaces: Profile, Services, Booking, About, Contact.
 - Owner-only Edit boundary documented but not yet implemented as backend authorization.
@@ -48,15 +49,19 @@ Preserve the spatial-glass direction while improving:
 
 ## Verification boundary
 
-The repository has two consecutive fully successful GitHub Actions workflows for the current frontend verification path:
+The current frontend baseline has a verified sequence of successful GitHub Actions runs:
 
 - **Run #73** on commit `399ea5374b782ba9b620c8b0878f8d74b723f1a2`: `typecheck-build` and `browser-verify` successful.
-- **Run #74** on commit `ac835a3e0cc69f2fe9614596c3437709789d5c7b`: `typecheck-build` and `browser-verify` successful, including explicit WebGL2-unavailable fallback coverage.
+- **Run #74** on commit `ac835a3e0cc69f2fe9614596c3437709789d5c7b`: successful, including explicit WebGL2-unavailable fallback coverage.
+- **Run #75**: successful documentation reconciliation.
+- **Run #76**: successful masterplan reconciliation.
+- **Run #77**: successful handover reconciliation.
+- **Run #80** on commit `152f324ed73248a7b26ea675867db6db45e0bdd2`: `typecheck-build` and `browser-verify` successful, including the computed clinic-focus depth regression check. The browser suite reports 7 passing tests on this baseline.
 
-The browser suite now exercises the landing Hero, authored mesh contract, semantic degraded-WebGL2 fallback, clinic public navigation, reduced-motion contract, and mobile shell.
+The browser suite exercises the landing Hero, authored mesh contract, semantic degraded-WebGL2 fallback, featured-clinic focus transition, clinic public navigation, reduced-motion contract, and mobile shell.
 
 Vercel has no MedMap project connected in the available account/team, so no hosted preview claim is made.
 
 ## Next action
 
-Continue frontend-only work through the final Hero composition/focus and visual-baseline freeze. After Phase 002 is formally accepted, proceed to Firestore/Auth/ownership and availability implementation under the existing contracts.
+Freeze the visual frontend baseline after the next fresh post-reconciliation browser evidence. After Phase 002 is formally accepted, proceed to Firestore/Auth/ownership and availability implementation under the existing contracts.
