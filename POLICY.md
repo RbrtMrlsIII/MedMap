@@ -43,6 +43,15 @@ Booking acceptance must be designed for concurrent requests. A correct result mu
 ### Clinic configuration is clinic-owned policy
 Clinic operators can configure availability, closed dates, treatment availability, pricing visibility, interval, and concurrency within the product's supported constraints. Customer UI cannot silently override clinic policy.
 
+### Clinic page surface is governed
+Every published clinic has one canonical hero and five guest-visible surfaces:
+
+`Profile | Services | Booking | About | Contact`
+
+`Edit` is an owner-only management surface. Guest UI must not expose it as a capability, but UI hiding is never authorization. Canonical ownership plus authenticated identity must independently enforce owner mutations.
+
+Profile and About remain distinct public responsibilities. Services shows only clinic-enabled public services. Booking uses server-derived availability. Contact requires at least one valid published contact channel.
+
 ### Clinical safety boundary
 MedMap may categorize and search services, but it must not diagnose, prescribe, claim clinical suitability, or present platform logic as professional medical advice.
 
