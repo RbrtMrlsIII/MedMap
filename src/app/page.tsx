@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeroDiorama } from "@/components/hero/HeroDiorama";
 import { MedMapCanvas } from "@/components/map/MedMapCanvas";
 
 const clinics = [
@@ -17,6 +18,7 @@ export default function HomePage() {
         <div className="hero-orbit hero-orbit-two" aria-hidden="true" />
         <div className="hero-beacon hero-beacon-one" aria-hidden="true" />
         <div className="hero-beacon hero-beacon-two" aria-hidden="true" />
+        <HeroDiorama />
         <MedMapCanvas />
 
         <header className="hero-nav glass-panel">
@@ -77,10 +79,10 @@ export default function HomePage() {
           </div>
           <div className="mini-nav" aria-label="Northstar clinic sections">
             {[
-              ["Profile", "#profile"],
-              ["Services", "#services"],
-              ["Booking", "#booking"],
-            ].map(([label, href]) => <a href={href} key={label}>{label}</a>)}
+              ["Profile", "/clinics/northstar#profile"],
+              ["Services", "/clinics/northstar#services"],
+              ["Booking", "/clinics/northstar#booking"],
+            ].map(([label, href]) => <Link href={href} key={label}>{label}</Link>)}
           </div>
           <Link href="/clinics/northstar" className="secondary-action">Open clinic</Link>
         </div>
