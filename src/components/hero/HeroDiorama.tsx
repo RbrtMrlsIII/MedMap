@@ -12,6 +12,13 @@ type MeshSpec = {
   emissive?: number;
 };
 
+type CameraPose = {
+  yaw: number;
+  pitch: number;
+  distance: number;
+  target: Vec3;
+};
+
 const MESHES: MeshSpec[] = [
   // Spatial arrival field.
   { center: [0, -0.34, 0.2], size: [8.6, 0.28, 5.4], color: [0.08, 0.19, 0.23] },
@@ -33,6 +40,12 @@ const MESHES: MeshSpec[] = [
   { center: [-2.35, 0.44, 1.55], size: [1.05, 1.55, 0.92], color: [0.10, 0.25, 0.29] },
   { center: [2.55, 0.43, 1.68], size: [1.00, 1.62, 0.92], color: [0.10, 0.25, 0.29] },
 ];
+
+const CAMERA_POSES = {
+  arrival: { yaw: -0.34, pitch: 0.18, distance: 9.4, target: [0.05, 0.48, 0.10] as Vec3 },
+  focus: { yaw: -0.23, pitch: 0.23, distance: 7.7, target: [0.10, 0.72, -0.20] as Vec3 },
+  overview: { yaw: -0.62, pitch: 0.14, distance: 10.8, target: [0, 0.10, 0.40] as Vec3 },
+} satisfies Record<string, CameraPose>;
 
 const VERTEX_SHADER = `#version 300 es
 in vec3 a_position;
@@ -84,6 +97,27 @@ void main() {
 
   outColor = vec4(lit, 0.90);
 }`;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function lerp(a: number, b: number, amount: number) {
+  return a + (b - a) * amount;
+}
+
+function lerpVec3(a: Vec3, b: Vec3, amount: number): Vec3 {
+  return [lerp(a[0], b[0], amount), lerp(a[1], b[1], amount), lerp(a[2], b[2], amount)];
+}
+
+function interpolatePose(a: CameraPose, b: CameraPose, amount: number): CameraPose {
+  return {
+    yaw: lerp(a.yaw, b.yaw, amount),
+    pitch: lerp(a.pitch, b.pitch, amount),
+    distance: lerp(a.distance, b.distance, amount),
+    target: lerpVec3(a.target, b.target, amount),
+  };
+}
 
 function createShader(gl: WebGL2RenderingContext, type: number, source: string) {
   const shader = gl.createShader(type);
@@ -137,34 +171,33 @@ function multiply(a: Float32Array, b: Float32Array) {
   return out;
 }
 
-function rotateY(angle: number) {
-  const c = Math.cos(angle);
-  const s = Math.sin(angle);
-  return new Float32Array([
-    c, 0, -s, 0,
-    0, 1, 0, 0,
-    s, 0, c, 0,
-    0, 0, 0, 1,
-  ]);
-}
+function lookAt(eye: Vec3, target: Vec3, up: Vec3 = [0, 1, 0]) {
+  const zx = eye[0] - target[0];
+  const zy = eye[1] - target[1];
+  const zz = eye[2] - target[2];
+  const zLength = Math.hypot(zx, zy, zz) || 1;
+  const z = [zx / zLength, zy / zLength, zz / zLength];
 
-function rotateX(angle: number) {
-  const c = Math.cos(angle);
-  const s = Math.sin(angle);
-  return new Float32Array([
-    1, 0, 0, 0,
-    0, c, s, 0,
-    0, -s, c, 0,
-    0, 0, 0, 1,
-  ]);
-}
+  const xx = up[1] * z[2] - up[2] * z[1];
+  const xy = up[2] * z[0] - up[0] * z[2];
+  const xz = up[0] * z[1] - up[1] * z[0];
+  const xLength = Math.hypot(xx, xy, xz) || 1;
+  const x = [xx / xLength, xy / xLength, xz / xLength];
 
-function translate(x: number, y: number, z: number) {
+  const y = [
+    z[1] * x[2] - z[2] * x[1],
+    z[2] * x[0] - z[0] * x[2],
+    z[0] * x[1] - z[1] * x[0],
+  ];
+
   return new Float32Array([
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    x, y, z, 1,
+    x[0], y[0], z[0], 0,
+    x[1], y[1], z[1], 0,
+    x[2], y[2], z[2], 0,
+    -(x[0] * eye[0] + x[1] * eye[1] + x[2] * eye[2]),
+    -(y[0] * eye[0] + y[1] * eye[1] + y[2] * eye[2]),
+    -(z[0] * eye[0] + z[1] * eye[1] + z[2] * eye[2]),
+    1,
   ]);
 }
 
@@ -208,12 +241,10 @@ function buildBox(center: Vec3, size: Vec3, color: Color, emissive = 0) {
   const emissiveData: number[] = [];
 
   faces.forEach((face, faceIndex) => {
-    const faceColor = faceColors[faceIndex];
-    const normal = faceNormals[faceIndex];
     face.forEach((vertex) => {
       vertices.push(...vertex);
-      colors.push(...faceColor);
-      normals.push(...normal);
+      colors.push(...faceColors[faceIndex]);
+      normals.push(...faceNormals[faceIndex]);
       emissiveData.push(emissive);
     });
   });
@@ -247,6 +278,9 @@ export function HeroDiorama() {
       return;
     }
     canvas.dataset.webgl = "active";
+    canvas.dataset.environmentVersion = "3";
+    canvas.dataset.cameraPov = "arrival";
+    canvas.dataset.cameraProgress = "0";
 
     const program = createProgram(gl);
     const positionLocation = gl.getAttribLocation(program, "a_position");
@@ -284,7 +318,6 @@ export function HeroDiorama() {
 
     canvas.dataset.meshCount = String(MESHES.length);
     canvas.dataset.meshTriangles = String(indexData.length / 3);
-    canvas.dataset.environmentVersion = "2";
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionData), gl.STATIC_DRAW);
@@ -316,11 +349,43 @@ export function HeroDiorama() {
     gl.useProgram(program);
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const pointer = { x: 0, y: 0 };
+    let currentPose: CameraPose = {
+      ...CAMERA_POSES.arrival,
+      target: [...CAMERA_POSES.arrival.target] as Vec3,
+    };
     let frame = 0;
-    let rotation = -0.34;
     let lastTime = performance.now();
 
+    const getTraversalProgress = () => {
+      const hero = canvas.closest(".hero-environment");
+      if (!(hero instanceof HTMLElement)) return 0;
+      const rect = hero.getBoundingClientRect();
+      const range = Math.max(1, rect.height - window.innerHeight);
+      return clamp(-rect.top / range, 0, 1);
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      const hero = canvas.closest(".hero-environment");
+      if (!(hero instanceof HTMLElement)) return;
+      const rect = hero.getBoundingClientRect();
+      if (event.clientY < rect.top || event.clientY > rect.bottom) return;
+      pointer.x = clamp(((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1, -1, 1);
+      pointer.y = clamp(((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 - 1, -1, 1);
+    };
+
+    const handlePointerLeave = () => {
+      pointer.x = 0;
+      pointer.y = 0;
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("blur", handlePointerLeave);
+
     const render = (now: number) => {
+      const delta = Math.min(50, Math.max(0, now - lastTime));
+      lastTime = now;
+
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.max(1, Math.round(canvas.clientWidth * dpr));
       const height = Math.max(1, Math.round(canvas.clientHeight * dpr));
@@ -330,18 +395,43 @@ export function HeroDiorama() {
         gl.viewport(0, 0, width, height);
       }
 
-      const delta = Math.min(32, now - lastTime);
-      lastTime = now;
-      if (!reducedMotion.matches) rotation += delta * 0.000022;
+      const progress = getTraversalProgress();
+      const focused = document.querySelector(".floating-clinic-card:hover, .floating-clinic-card:focus-within") !== null;
+      const basePose = focused
+        ? CAMERA_POSES.focus
+        : interpolatePose(CAMERA_POSES.arrival, CAMERA_POSES.overview, progress);
+      const motionScale = reducedMotion.matches ? 0 : 1;
+      const targetPose: CameraPose = {
+        ...basePose,
+        yaw: basePose.yaw + pointer.x * 0.055 * motionScale,
+        pitch: clamp(basePose.pitch - pointer.y * 0.035 * motionScale, 0.08, 0.30),
+      };
+
+      const smoothing = 1 - Math.pow(0.001, delta / (focused ? 150 : 280));
+      currentPose = {
+        yaw: lerp(currentPose.yaw, targetPose.yaw, smoothing),
+        pitch: lerp(currentPose.pitch, targetPose.pitch, smoothing),
+        distance: lerp(currentPose.distance, targetPose.distance, smoothing),
+        target: lerpVec3(currentPose.target, targetPose.target, smoothing),
+      };
+
+      canvas.dataset.cameraPov = focused ? "focus" : progress < 0.12 ? "arrival" : "overview";
+      canvas.dataset.cameraProgress = progress.toFixed(3);
+      canvas.dataset.cameraYaw = currentPose.yaw.toFixed(3);
+      canvas.dataset.cameraPitch = currentPose.pitch.toFixed(3);
+      canvas.dataset.cameraDistance = currentPose.distance.toFixed(3);
 
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      const projection = perspective(Math.PI / 4.2, width / height, 0.1, 100);
-      const camera = translate(0, -0.58, -9.4);
-      const world = multiply(rotateX(-0.18), rotateY(rotation));
-      const matrix = multiply(projection, multiply(camera, world));
-      gl.uniformMatrix4fv(matrixLocation, false, matrix);
       gl.uniform1f(timeLocation, now * 0.001);
+
+      const eye: Vec3 = [
+        currentPose.target[0] + Math.sin(currentPose.yaw) * Math.cos(currentPose.pitch) * currentPose.distance,
+        currentPose.target[1] + Math.sin(currentPose.pitch) * currentPose.distance,
+        currentPose.target[2] + Math.cos(currentPose.yaw) * Math.cos(currentPose.pitch) * currentPose.distance,
+      ];
+      const projection = perspective(Math.PI / 4.2, width / height, 0.1, 100);
+      const view = lookAt(eye, currentPose.target);
+      gl.uniformMatrix4fv(matrixLocation, false, multiply(projection, view));
       gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
       frame = window.requestAnimationFrame(render);
     };
@@ -349,6 +439,8 @@ export function HeroDiorama() {
     render(performance.now());
     return () => {
       window.cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("blur", handlePointerLeave);
       gl.deleteBuffer(positionBuffer);
       gl.deleteBuffer(colorBuffer);
       gl.deleteBuffer(normalBuffer);
@@ -366,7 +458,9 @@ export function HeroDiorama() {
       data-webgl="unavailable"
       data-mesh-count="12"
       data-mesh-triangles="144"
-      data-environment-version="2"
+      data-environment-version="3"
+      data-camera-pov="arrival"
+      data-camera-progress="0"
       aria-hidden="true"
     />
   );
