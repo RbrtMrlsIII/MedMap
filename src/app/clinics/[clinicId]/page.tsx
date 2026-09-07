@@ -1,4 +1,5 @@
 import Link from "next/link";
+import "./clinic.css";
 
 const clinic = {
   name: "Northstar Family Clinic",
