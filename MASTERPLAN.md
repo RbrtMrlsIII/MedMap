@@ -80,8 +80,8 @@ Trusted application boundary
 7. [x] Guest surfaces: Profile, Services, Booking, About, Contact.
 8. [x] Owner-only Edit boundary represented in product model and guest surface.
 9. [ ] Refine Hero scene composition and spatial focus transitions.
-10. [ ] Responsive mobile spatial composition.
-11. [ ] Reduced-motion/degraded-map browser verification.
+10. [x] Responsive mobile spatial composition.
+11. [x] Reduced-motion/degraded-map browser verification.
 12. [ ] Freeze visual frontend baseline after browser evidence.
 
 ## Phase 003 — Clinic identity and supply
