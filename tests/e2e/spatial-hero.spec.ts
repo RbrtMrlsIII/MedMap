@@ -22,6 +22,7 @@ test.describe("MedMap spatial Hero", () => {
     await expect(meshCanvas).toHaveAttribute("data-webgl", /^(active|unavailable)$/);
     await expect(meshCanvas).toHaveAttribute("data-mesh-count", "12");
     await expect(meshCanvas).toHaveAttribute("data-mesh-triangles", "144");
+    await expect(meshCanvas).toHaveAttribute("data-environment-version", "2");
 
     if (process.env.CI) {
       await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
