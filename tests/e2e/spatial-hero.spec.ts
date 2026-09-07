@@ -36,6 +36,24 @@ test.describe("MedMap spatial Hero", () => {
     });
   });
 
+  test("preserves the semantic Hero when authored WebGL2 is unavailable", async ({ page }) => {
+    await page.addInitScript(() => {
+      const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function getContext(type: string, ...args: unknown[]) {
+        if (type === "webgl2" && this.dataset.testid === "hero-mesh-canvas") return null;
+        return originalGetContext.call(this, type as never, ...args as never[]);
+      };
+    });
+
+    await page.goto("/");
+
+    const meshCanvas = page.getByTestId("hero-mesh-canvas");
+    await expect(meshCanvas).toHaveAttribute("data-webgl", "unavailable");
+    await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
+    await expect(page.locator(".map-canvas")).toBeVisible();
+  });
+
   test("enters the canonical clinic public surface", async ({ page }) => {
     await page.goto("/clinics/northstar");
 
