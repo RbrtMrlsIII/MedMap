@@ -69,7 +69,7 @@ Trusted application boundary
 10. [x] Add clinic-page surface contract and navigation ownership model.
 11. [x] Reconcile assistant guide, policy, skill wiring, and product knowledge with clinic-surface governance.
 
-## Phase 002 — Spatial frontend prototype — IN PROGRESS
+## Phase 002 — Spatial frontend prototype — READY FOR ACCEPTANCE
 
 1. [x] Map-first landing Hero.
 2. [x] MapLibre pitched spatial camera.
@@ -82,7 +82,16 @@ Trusted application boundary
 9. [x] Refine Hero scene composition and spatial focus transitions.
 10. [x] Responsive mobile spatial composition.
 11. [x] Reduced-motion/degraded-map browser verification.
-12. [ ] Freeze visual frontend baseline after browser evidence.
+12. [x] Freeze visual frontend baseline after fresh browser evidence.
+
+### Phase 002 acceptance evidence
+
+- **Run #80** on commit `152f324ed73248a7b26ea675867db6db45e0bdd2`: build and browser verification successful, including computed clinic-focus depth.
+- **Run #81** on commit `f093cffdd8173e42c3b0ce26fcdf06ced7440783`: build and browser verification successful after governance reconciliation.
+- **Run #84** on commit `412d227556dfb53a3736af641c10089f1b0c990e`: build and browser verification successful after the mobile Hero stacking correction and regression coverage.
+- Run #84 retained a Playwright report artifact for the verified browser suite.
+
+The frozen frontend baseline includes the MapLibre/WebGL discovery Hero, authored WebGL2 mesh enhancement with semantic fallback, featured-clinic focus transition, guest clinic surface, responsive mobile composition, and reduced-motion behavior. Backend/domain implementation remains deliberately outside this phase.
 
 ## Phase 003 — Clinic identity and supply
 
