@@ -17,6 +17,16 @@ const CLINICS: ClinicPin[] = [
   { id: "lumen", name: "Lumen Skin & Wellness", lng: 121.055, lat: 14.618 },
 ];
 
+function createClinicMarker(clinic: ClinicPin) {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.className = "clinic-map-marker";
+  el.setAttribute("aria-label", `Open ${clinic.name}`);
+  el.innerHTML = `<span class="clinic-map-marker-core">+</span><span class="clinic-map-marker-ring" aria-hidden="true"></span>`;
+  el.title = clinic.name;
+  return el;
+}
+
 export function MedMapCanvas() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -28,28 +38,42 @@ export function MedMapCanvas() {
       container: containerRef.current,
       style: mapStyle,
       center: [121.04, 14.608],
-      zoom: 12.8,
-      pitch: 48,
-      bearing: -12,
+      zoom: 13.05,
+      pitch: 58,
+      bearing: -18,
       antialias: true,
       attributionControl: true,
     });
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "bottom-right");
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "bottom-right");
+    map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: "metric" }), "bottom-left");
 
+    const markers: maplibregl.Marker[] = [];
     map.on("load", () => {
       CLINICS.forEach((clinic) => {
-        const marker = new maplibregl.Marker({ color: "#f5fbff" })
+        const element = createClinicMarker(clinic);
+        const marker = new maplibregl.Marker({ element, anchor: "center" })
           .setLngLat([clinic.lng, clinic.lat])
-          .setPopup(new maplibregl.Popup({ offset: 18 }).setText(clinic.name))
+          .setPopup(
+            new maplibregl.Popup({ offset: 20, closeButton: false, className: "clinic-popup" })
+              .setHTML(`<strong>${clinic.name}</strong><span>Clinic discovery point</span>`),
+          )
           .addTo(map);
-
-        marker.getElement().style.filter = "drop-shadow(0 0 14px rgba(137, 231, 255, .75))";
+        markers.push(marker);
       });
     });
 
-    return () => map.remove();
+    return () => {
+      markers.forEach((marker) => marker.remove());
+      map.remove();
+    };
   }, []);
 
-  return <div ref={containerRef} className="map-canvas" aria-label="Interactive clinic map" />;
+  return (
+    <div
+      ref={containerRef}
+      className="map-canvas"
+      aria-label="Interactive 3D clinic discovery map"
+    />
+  );
 }
