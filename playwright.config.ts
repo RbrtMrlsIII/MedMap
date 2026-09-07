@@ -13,7 +13,7 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI
     ? [["github"], ["html", { outputFolder: "playwright-report", open: "never" }]]
@@ -42,9 +42,12 @@ export default defineConfig({
     {
       name: "chromium-tablet",
       use: {
-        ...devices["iPad Mini"],
+        ...devices["Desktop Chrome"],
         channel: "chromium",
         headless: false,
+        isMobile: true,
+        hasTouch: true,
+        viewport: { width: 768, height: 1024 },
         launchOptions: chromiumLaunchOptions,
       },
     },
