@@ -54,6 +54,18 @@ test.describe("MedMap spatial Hero", () => {
     await expect(page.locator(".map-canvas")).toBeVisible();
   });
 
+  test("focuses the featured clinic spatially without replacing semantic controls", async ({ page }) => {
+    await page.goto("/");
+
+    const meshCanvas = page.getByTestId("hero-mesh-canvas");
+    const featuredLink = page.getByRole("link", { name: "Open clinic" });
+
+    await featuredLink.focus();
+    await expect(meshCanvas).toHaveCSS("filter", /saturate\(1\.08\)/);
+    await expect(page.locator(".floating-clinic-card")).toHaveCSS("transform", /translateZ\(48px\)/);
+    await expect(featuredLink).toBeFocused();
+  });
+
   test("enters the canonical clinic public surface", async ({ page }) => {
     await page.goto("/clinics/northstar");
 
