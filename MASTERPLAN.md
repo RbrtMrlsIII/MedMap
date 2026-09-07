@@ -8,23 +8,13 @@ Make clinic discovery spatial, treatment-aware, profile-rich, contactable, and a
 
 ## Governance lineage
 
-MedMap adopts validated patterns from three existing repositories:
-
 ```text
-TeamAi
-  → authority hierarchy, canonical-state boundaries,
-    ORUCAVEAM discipline, evidence, handover, endorsement
-
-Universal ToolKit
-  → reusable governance skeleton, layer separation,
-    minimalism, census/continuity concepts
-
-HomeFinder-Official
-  → spatial product discipline, profile-oriented UI concerns,
-    staged reconciliation, preserve useful work, verify physical/spatial behavior
+TeamAi → authority hierarchy, canonical-state boundaries, ORUCAVEAM, evidence, handover, endorsement
+Universal ToolKit → reusable governance skeleton, layer separation, minimalism, continuity
+HomeFinder-Official → spatial/profile concerns, staged reconciliation, preservation of useful work
 ```
 
-These sources are upstream patterns only. `PRODUCT_LAW.md` remains the MedMap authority.
+These are upstream patterns only. `PRODUCT_LAW.md` remains the MedMap authority.
 
 ## Authority map
 
@@ -77,6 +67,7 @@ Trusted application boundary
 8. [x] Add repository CI validation path.
 9. [x] Reconcile clinic-page tab/visibility law.
 10. [x] Add clinic-page surface contract and navigation ownership model.
+11. [x] Reconcile assistant guide, policy, skill wiring, and product knowledge with clinic-surface governance.
 
 ## Phase 002 — Clinic identity and supply
 
@@ -87,7 +78,7 @@ Trusted application boundary
 5. Services tab: enabled public services/treatments, duration, price-state, bookability.
 6. About tab: public clinic bio and approved descriptive content.
 7. Contact tab: one-or-more validated contact channels.
-8. Owner-only Edit surface for all allowed clinic profile/content settings.
+8. Owner-only Edit surface for allowed clinic profile/content settings.
 9. Owner authorization tests: guest cannot access or mutate Edit.
 10. Media references and Supabase Storage integration.
 
@@ -102,8 +93,8 @@ Trusted application boundary
 7. Exclusive capacity.
 8. Concurrent capacity.
 9. Optional treatment-specific capacity.
-10. Availability calculation contract implementation.
-11. Owner edits invalidate stale availability assumptions.
+10. Availability calculation implementation.
+11. Owner edits invalidate or recheck stale availability.
 
 ## Phase 004 — Customer discovery
 
