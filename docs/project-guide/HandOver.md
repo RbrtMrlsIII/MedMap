@@ -30,7 +30,7 @@ The MedMap frontend is being built before backend implementation, by deliberate 
 - Supabase Storage integration.
 - PayPal subscriptions/webhooks.
 - Live clinic data.
-- Full degraded-WebGL2 browser verification acceptance for the newest guard test, pending CI run #74.
+- Final visual frontend baseline freeze.
 
 ## Protected product meaning
 
@@ -48,12 +48,15 @@ Preserve the spatial-glass direction while improving:
 
 ## Verification boundary
 
-The repository now has its first fully successful GitHub Actions workflow: **run #73** on commit `399ea5374b782ba9b620c8b0878f8d74b723f1a2`, with both `typecheck-build` and `browser-verify` successful. The browser suite exercised the landing Hero, authored mesh contract, clinic public navigation, reduced-motion contract, and mobile shell.
+The repository has two consecutive fully successful GitHub Actions workflows for the current frontend verification path:
 
-A follow-up verification guard was then committed as `ac835a3e0cc69f2fe9614596c3437709789d5c7b`. GitHub Actions **run #74** is currently in progress and adds explicit WebGL2-degraded fallback coverage. Its result is intentionally not pre-claimed.
+- **Run #73** on commit `399ea5374b782ba9b620c8b0878f8d74b723f1a2`: `typecheck-build` and `browser-verify` successful.
+- **Run #74** on commit `ac835a3e0cc69f2fe9614596c3437709789d5c7b`: `typecheck-build` and `browser-verify` successful, including explicit WebGL2-unavailable fallback coverage.
+
+The browser suite now exercises the landing Hero, authored mesh contract, semantic degraded-WebGL2 fallback, clinic public navigation, reduced-motion contract, and mobile shell.
 
 Vercel has no MedMap project connected in the available account/team, so no hosted preview claim is made.
 
 ## Next action
 
-Continue frontend-only work until the Hero + clinic public surface is visually coherent enough to freeze as the frontend baseline. The next verification gate is the run #74 degraded-WebGL2 check. After Phase 002 is formally accepted, proceed to Firestore/Auth/ownership and availability implementation under the existing contracts.
+Continue frontend-only work through the final Hero composition/focus and visual-baseline freeze. After Phase 002 is formally accepted, proceed to Firestore/Auth/ownership and availability implementation under the existing contracts.
