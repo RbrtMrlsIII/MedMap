@@ -71,6 +71,19 @@ test.describe("MedMap spatial Hero", () => {
     await expect(featuredLink).toBeFocused();
   });
 
+  test("keeps the mobile clinic card below the discovery copy", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+
+    const heroCopy = page.locator(".hero-copy");
+    const featuredCard = page.locator(".floating-clinic-card");
+    const [copyBox, cardBox] = await Promise.all([heroCopy.boundingBox(), featuredCard.boundingBox()]);
+
+    expect(copyBox).not.toBeNull();
+    expect(cardBox).not.toBeNull();
+    expect(cardBox!.y).toBeGreaterThanOrEqual(copyBox!.y + copyBox!.height + 12);
+  });
+
   test("enters the canonical clinic public surface", async ({ page }) => {
     await page.goto("/clinics/northstar");
 
