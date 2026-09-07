@@ -55,3 +55,36 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  smoke:
+    name: Verify live Pages site
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch live landing page
+        run: |
+          set -euo pipefail
+          url="https://RbrtMrlsIII.github.io/MedMap/"
+          body="$(curl --fail --silent --show-error --location "$url")"
+          printf '%s' "$body" > /tmp/medmap-pages.html
+          grep -Fq 'Find a clinic that can actually take your appointment.' /tmp/medmap-pages.html
+          grep -Fq 'SPATIAL CLINIC DISCOVERY' /tmp/medmap-pages.html
+          if grep -Fq 'Read PRODUCT_LAW.md first' /tmp/medmap-pages.html; then
+            echo 'Live Pages site is serving README content instead of the MedMap application.'
+            exit 1
+          fi
+          echo 'Live Pages smoke verification passed.'
+
+      - name: Fetch live clinic route
+        run: |
+          set -euo pipefail
+          url="https://RbrtMrlsIII.github.io/MedMap/clinics/northstar/"
+          body="$(curl --fail --silent --show-error --location "$url")"
+          printf '%s' "$body" > /tmp/medmap-clinic.html
+          grep -Fq 'Northstar Family Clinic' /tmp/medmap-clinic.html
+          grep -Fq 'Profile' /tmp/medmap-clinic.html
+          grep -Fq 'Services' /tmp/medmap-clinic.html
+          grep -Fq 'Booking' /tmp/medmap-clinic.html
+          grep -Fq 'About' /tmp/medmap-clinic.html
+          grep -Fq 'Contact' /tmp/medmap-clinic.html
+          echo 'Live clinic route smoke verification passed.'
