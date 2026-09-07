@@ -22,7 +22,8 @@ test.describe("MedMap spatial Hero", () => {
     await expect(meshCanvas).toHaveAttribute("data-webgl", /^(active|unavailable)$/);
     await expect(meshCanvas).toHaveAttribute("data-mesh-count", "12");
     await expect(meshCanvas).toHaveAttribute("data-mesh-triangles", "144");
-    await expect(meshCanvas).toHaveAttribute("data-environment-version", "2");
+    await expect(meshCanvas).toHaveAttribute("data-environment-version", "3");
+    await expect(meshCanvas).toHaveAttribute("data-camera-pov", "arrival");
 
     if (process.env.CI) {
       await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
@@ -55,13 +56,14 @@ test.describe("MedMap spatial Hero", () => {
     await expect(page.locator(".map-canvas")).toBeVisible();
   });
 
-  test("focuses the featured clinic spatially without replacing semantic controls", async ({ page }) => {
+  test("moves into the focus POV when the featured clinic receives focus", async ({ page }) => {
     await page.goto("/");
 
     const meshCanvas = page.getByTestId("hero-mesh-canvas");
     const featuredLink = page.getByRole("link", { name: "Open clinic" });
 
     await featuredLink.focus();
+    await expect(meshCanvas).toHaveAttribute("data-camera-pov", "focus");
     await expect(meshCanvas).toHaveCSS("filter", /saturate\(1\.08\)/);
 
     const depth = await page.locator(".floating-clinic-card").evaluate((element) => {
@@ -70,6 +72,23 @@ test.describe("MedMap spatial Hero", () => {
     });
     expect(depth).toBeGreaterThan(45);
     await expect(featuredLink).toBeFocused();
+  });
+
+  test("traverses from arrival into overview within bounded camera state", async ({ page }) => {
+    await page.goto("/");
+
+    const meshCanvas = page.getByTestId("hero-mesh-canvas");
+    const initialProgress = Number(await meshCanvas.getAttribute("data-camera-progress"));
+    expect(initialProgress).toBeGreaterThanOrEqual(0);
+    expect(initialProgress).toBeLessThan(0.12);
+
+    await page.evaluate(() => window.scrollTo({ top: Math.max(1, document.body.scrollHeight * 0.45), behavior: "auto" }));
+    await expect.poll(async () => Number(await meshCanvas.getAttribute("data-camera-progress"))).toBeGreaterThan(0.12);
+    await expect(meshCanvas).toHaveAttribute("data-camera-pov", "overview");
+
+    const distance = Number(await meshCanvas.getAttribute("data-camera-distance"));
+    expect(distance).toBeGreaterThanOrEqual(7.7);
+    expect(distance).toBeLessThanOrEqual(10.8);
   });
 
   test("keeps the mobile clinic card below the discovery copy", async ({ page }) => {
