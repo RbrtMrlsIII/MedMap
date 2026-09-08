@@ -5,11 +5,11 @@ const VIEWPORTS = [[320, 568], [390, 844], [768, 1024], [1024, 768], [1280, 800]
 test.describe("MedMap Three.js WebGL2 spatial baseline", () => {
   test("renders the semantic shell with MapLibre and the authored 3D canvas", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Find care nearby." })).toBeVisible();
     await expect(page.locator(".map-canvas")).toBeVisible();
     const canvas = page.getByTestId("hero-mesh-canvas");
     await expect(canvas).toBeVisible();
-    await expect(canvas).toHaveAttribute("data-environment-version", "4");
+    await expect(canvas).toHaveAttribute("data-environment-version", "5");
     await expect(canvas).toHaveAttribute("data-webgl", /^(active|unavailable)$/);
   });
 
@@ -33,7 +33,7 @@ test.describe("MedMap Three.js WebGL2 spatial baseline", () => {
     });
     await page.goto("/");
     await expect(page.getByTestId("hero-mesh-canvas")).toHaveAttribute("data-webgl", "unavailable");
-    await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Find care nearby." })).toBeVisible();
     await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
     await expect(page.locator(".map-canvas")).toBeVisible();
   });
