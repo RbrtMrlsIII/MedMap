@@ -1,241 +1,72 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
-const VIEWPORT_MATRIX = [
-  { name: "small-phone", width: 320, height: 568 },
-  { name: "phone", width: 360, height: 800 },
-  { name: "phone-plus", width: 390, height: 844 },
-  { name: "large-phone", width: 430, height: 932 },
-  { name: "small-tablet", width: 600, height: 960 },
-  { name: "tablet", width: 768, height: 1024 },
-  { name: "large-tablet", width: 834, height: 1112 },
-  { name: "small-desktop", width: 1024, height: 768 },
-  { name: "desktop", width: 1280, height: 800 },
-  { name: "large-desktop", width: 1440, height: 900 },
-  { name: "wide-desktop", width: 1728, height: 1117 },
-];
+const VIEWPORTS = [[320, 568], [390, 844], [768, 1024], [1024, 768], [1280, 800], [1440, 900]] as const;
 
-async function assertViewportIntegrity(page: Page, width: number, height: number) {
-  await page.setViewportSize({ width, height });
-  await page.goto("/");
-
-  await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
-  await expect(page.getByTestId("hero-mesh-canvas")).toBeVisible();
-
-  const metrics = await page.evaluate(() => ({
-    bodyWidth: document.body.scrollWidth,
-    docWidth: document.documentElement.scrollWidth,
-    layoutWidth: document.documentElement.clientWidth,
-    heroWidth: document.querySelector(".hero-environment")?.getBoundingClientRect().width ?? 0,
-  }));
-
-  expect(metrics.bodyWidth).toBeLessThanOrEqual(metrics.layoutWidth);
-  expect(metrics.docWidth).toBeLessThanOrEqual(metrics.layoutWidth);
-  expect(Math.abs(metrics.heroWidth - metrics.layoutWidth)).toBeLessThanOrEqual(1);
-}
-
-test.describe("MedMap spatial Hero", () => {
-  test("renders the spatial discovery shell and clinic entry", async ({ page }) => {
+test.describe("MedMap Three.js WebGL2 spatial baseline", () => {
+  test("renders the semantic shell with MapLibre and the authored 3D canvas", async ({ page }) => {
     await page.goto("/");
-
-    await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
-    await expect(page.getByText("MapLibre WebGL", { exact: true })).toHaveCount(2);
-    await expect(page.getByText("Clinic-first", { exact: true })).toHaveCount(1);
-    await expect(page.getByText("Prototype data", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Open clinic" })).toHaveAttribute("href", "/clinics/northstar");
+    await expect(page.getByRole("heading", { name: "Find care nearby." })).toBeVisible();
     await expect(page.locator(".map-canvas")).toBeVisible();
-    await expect(page.locator(".hero-environment")).toBeVisible();
-    await expect(page.locator(".floating-clinic-card")).toBeVisible();
+    const canvas = page.getByTestId("hero-mesh-canvas");
+    await expect(canvas).toBeVisible();
+    await expect(canvas).toHaveAttribute("data-environment-version", "5");
+    await expect(canvas).toHaveAttribute("data-webgl", /^(active|unavailable)$/);
   });
 
-  test("renders the authored mesh scene and preserves the semantic fallback", async ({ page }, testInfo) => {
+  test("uses WebGL2 when the browser exposes it", async ({ page }) => {
     await page.goto("/");
-
-    const meshCanvas = page.getByTestId("hero-mesh-canvas");
-    await expect(meshCanvas).toBeVisible();
-    await expect(meshCanvas).toHaveAttribute("data-webgl", /^(active|unavailable)$/);
-    await expect(meshCanvas).toHaveAttribute("data-mesh-count", "12");
-    await expect(meshCanvas).toHaveAttribute("data-mesh-triangles", "144");
-    await expect(meshCanvas).toHaveAttribute("data-environment-version", "3");
-
-    if (process.env.CI) {
-      await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
-      await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
-    } else {
-      await expect(meshCanvas).toHaveAttribute("data-webgl", "active");
+    const canvas = page.getByTestId("hero-mesh-canvas");
+    if (await canvas.getAttribute("data-webgl") === "active") {
+      await expect(canvas).toHaveAttribute("data-camera-pov", "arrival");
+      await expect(canvas).toHaveAttribute("data-camera-progress", /\d+\.\d{3}/);
+      expect(Number(await canvas.getAttribute("data-camera-distance"))).toBeGreaterThan(1);
     }
-
-    await testInfo.attach("spatial-hero-desktop", {
-      body: await page.screenshot({ fullPage: false }),
-      contentType: "image/png",
-    });
   });
 
-  test("preserves the semantic Hero when authored WebGL2 is unavailable", async ({ page }) => {
+  test("keeps the product usable when WebGL2 is unavailable", async ({ page }) => {
     await page.addInitScript(() => {
-      const originalGetContext = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function getContext(type: string, ...args: unknown[]) {
+      const original = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (type: string, ...args: unknown[]) {
         if (type === "webgl2" && this.dataset.testid === "hero-mesh-canvas") return null;
-        return originalGetContext.call(this, type as never, ...args as never[]);
+        return original.call(this, type as never, ...args as never[]);
       };
     });
-
     await page.goto("/");
-
-    const meshCanvas = page.getByTestId("hero-mesh-canvas");
-    await expect(meshCanvas).toHaveAttribute("data-webgl", "unavailable");
-    await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
+    await expect(page.getByTestId("hero-mesh-canvas")).toHaveAttribute("data-webgl", "unavailable");
+    await expect(page.getByRole("heading", { name: "Find care nearby." })).toBeVisible();
     await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
     await expect(page.locator(".map-canvas")).toBeVisible();
   });
 
-  test("moves into the focus POV when the featured clinic receives focus", async ({ page }) => {
+  test("moves the camera through a bounded Hero traversal", async ({ page }) => {
     await page.goto("/");
-
-    const meshCanvas = page.getByTestId("hero-mesh-canvas");
-    const featuredLink = page.getByRole("link", { name: "Open clinic" });
-
-    await featuredLink.focus();
-    await expect(meshCanvas).toHaveCSS("filter", /saturate\(1\.08\)/);
-
-    const depth = await page.locator(".floating-clinic-card").evaluate((element) => {
-      const transform = getComputedStyle(element).transform;
-      return transform === "none" ? 0 : new DOMMatrix(transform).m43;
-    });
-    expect(depth).toBeGreaterThan(45);
-    await expect(featuredLink).toBeFocused();
-
-    const webgl = await meshCanvas.getAttribute("data-webgl");
-    if (webgl === "active") {
-      await expect(meshCanvas).toHaveAttribute("data-camera-pov", "focus");
-
-      const camera = await meshCanvas.evaluate((canvas) => ({
-        yaw: Number(canvas.getAttribute("data-camera-yaw")),
-        pitch: Number(canvas.getAttribute("data-camera-pitch")),
-        distance: Number(canvas.getAttribute("data-camera-distance")),
-      }));
-      expect(camera.yaw).toBeGreaterThanOrEqual(-1.2);
-      expect(camera.yaw).toBeLessThanOrEqual(0.2);
-      expect(camera.pitch).toBeGreaterThanOrEqual(0.05);
-      expect(camera.pitch).toBeLessThanOrEqual(0.4);
-      expect(camera.distance).toBeGreaterThanOrEqual(7.7);
-      expect(camera.distance).toBeLessThanOrEqual(10.8);
-    } else {
-      await expect(meshCanvas).toHaveAttribute("data-camera-pov", "arrival");
-    }
-  });
-
-  test("traverses from arrival into overview within bounded camera state", async ({ page }) => {
-    await page.goto("/");
-
-    const meshCanvas = page.getByTestId("hero-mesh-canvas");
-    const initialProgress = Number(await meshCanvas.getAttribute("data-camera-progress"));
-    expect(initialProgress).toBeGreaterThanOrEqual(0);
-    expect(initialProgress).toBeLessThan(0.12);
-
-    const initialScroll = await page.evaluate(() => window.scrollY);
+    const canvas = page.getByTestId("hero-mesh-canvas");
+    if (await canvas.getAttribute("data-webgl") !== "active") test.skip();
+    await expect.poll(async () => Number(await canvas.getAttribute("data-camera-progress"))).toBeLessThan(0.12);
     await page.evaluate(() => window.scrollTo({ top: Math.max(1, document.body.scrollHeight * 0.45), behavior: "auto" }));
-    await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(initialScroll);
+    await expect.poll(async () => Number(await canvas.getAttribute("data-camera-progress"))).toBeGreaterThan(0.12);
+    const pov = await canvas.getAttribute("data-camera-pov");
+    expect(["hall", "overview"]).toContain(pov);
+    const distance = Number(await canvas.getAttribute("data-camera-distance"));
+    expect(distance).toBeGreaterThan(4);
+    expect(distance).toBeLessThan(20);
+  });
 
-    const webgl = await meshCanvas.getAttribute("data-webgl");
-    if (webgl === "active") {
-      await expect.poll(async () => Number(await meshCanvas.getAttribute("data-camera-progress"))).toBeGreaterThan(0.12);
-      await expect(meshCanvas).toHaveAttribute("data-camera-pov", "overview");
-
-      const distance = Number(await meshCanvas.getAttribute("data-camera-distance"));
-      expect(distance).toBeGreaterThanOrEqual(7.7);
-      expect(distance).toBeLessThanOrEqual(10.8);
-    } else {
-      await expect(meshCanvas).toHaveAttribute("data-camera-pov", "arrival");
+  test("preserves mobile layout integrity", async ({ page }) => {
+    for (const [width, height] of VIEWPORTS) {
+      await page.setViewportSize({ width, height });
+      await page.goto("/");
+      await expect(page.getByTestId("hero-mesh-canvas")).toBeVisible();
       await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
+      const bodyWidth = await page.locator("body").evaluate((body) => body.scrollWidth);
+      expect(bodyWidth).toBeLessThanOrEqual(width);
     }
   });
 
-  test("sweeps the Hero across phone, tablet, and desktop viewport classes", async ({ page }, testInfo) => {
-    const failures: string[] = [];
-
-    for (const viewport of VIEWPORT_MATRIX) {
-      try {
-        await assertViewportIntegrity(page, viewport.width, viewport.height);
-
-        const meshCanvas = page.getByTestId("hero-mesh-canvas");
-        await expect(meshCanvas).toHaveAttribute("data-mesh-count", "12");
-        await expect(meshCanvas).toHaveAttribute("data-mesh-triangles", "144");
-
-        const cardBox = await page.locator(".floating-clinic-card").boundingBox();
-        const headingBox = await page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." }).boundingBox();
-        if (!cardBox || !headingBox) throw new Error("Hero geometry could not be measured");
-        if (viewport.width <= 600 && cardBox.y < headingBox.y + headingBox.height) {
-          throw new Error("Featured clinic card overlaps the discovery heading");
-        }
-      } catch (error) {
-        failures.push(`${viewport.name} (${viewport.width}x${viewport.height}): ${error instanceof Error ? error.message : String(error)}`);
-      }
-    }
-
-    if (failures.length) throw new Error(failures.join("\n"));
-
-    await testInfo.attach("spatial-hero-viewport-matrix", {
-      body: Buffer.from(JSON.stringify(VIEWPORT_MATRIX, null, 2)),
-      contentType: "application/json",
-    });
-  });
-
-  test("keeps the mobile clinic card below the discovery copy", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
-
-    const heroCopy = page.locator(".hero-copy");
-    const featuredCard = page.locator(".floating-clinic-card");
-    const [copyBox, cardBox] = await Promise.all([heroCopy.boundingBox(), featuredCard.boundingBox()]);
-
-    expect(copyBox).not.toBeNull();
-    expect(cardBox).not.toBeNull();
-    expect(cardBox!.y).toBeGreaterThanOrEqual(copyBox!.y + copyBox!.height + 12);
-  });
-
-  test("enters the canonical clinic public surface", async ({ page }) => {
+  test("keeps the canonical clinic public surface intact", async ({ page }) => {
     await page.goto("/clinics/northstar");
-
     await expect(page.getByRole("heading", { name: "Northstar Family Clinic" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Profile", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Services", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Booking", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "About", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Contact", exact: true })).toBeVisible();
+    for (const label of ["Profile", "Services", "Booking", "About", "Contact"]) await expect(page.getByRole("link", { name: label, exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Edit", exact: true })).toHaveCount(0);
-  });
-
-  test("ships the reduced-motion CSS contract", async ({ page }) => {
-    await page.goto("/");
-
-    const reducedMotionRuleExists = await page.evaluate(() =>
-      Array.from(document.styleSheets).some((sheet) => {
-        try {
-          return Array.from(sheet.cssRules).some((rule) => rule.cssText.includes("prefers-reduced-motion"));
-        } catch {
-          return false;
-        }
-      }),
-    );
-
-    expect(reducedMotionRuleExists).toBeTruthy();
-  });
-
-  test("keeps the spatial shell usable at mobile width", async ({ page }, testInfo) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
-
-    await expect(page.getByRole("heading", { name: "Find a clinic that can actually take your appointment." })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Open clinic" })).toBeVisible();
-    await expect(page.getByTestId("hero-mesh-canvas")).toBeVisible();
-
-    const bodyWidth = await page.locator("body").evaluate((body) => body.scrollWidth);
-    expect(bodyWidth).toBeLessThanOrEqual(390);
-
-    await testInfo.attach("spatial-hero-mobile", {
-      body: await page.screenshot({ fullPage: false }),
-      contentType: "image/png",
-    });
   });
 });

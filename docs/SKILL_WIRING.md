@@ -1,31 +1,27 @@
 # MedMap Skill Wiring
 
-This is the navigation map, not a source of product authority. `PRODUCT_LAW.md` remains authoritative.
+This file maps product/contract work to the Skill that explains how the work is performed. It is wiring, not authority.
 
-| Work class | Canonical contract | Skill/domain needed | Verification |
+| Work class | Contract / authority | Skill | Primary evidence |
 |---|---|---|---|
-| Governance change | Product Law / Masterplan | governance skill when established | document read-back + reconciliation |
-| Firestore domain state | `DOMAIN_MODEL.md` | Firebase/Firestore data skill | independent read-back |
-| Availability | `BOOKING_AVAILABILITY.md` | booking/availability skill | contract tests + race tests |
-| MapLibre UI | `MAP_SPATIAL.md` | map/frontend skill | browser visual/interaction check |
-| Spatial Hero environment | `HERO_ENVIRONMENT.md` | spatial-hero/frontend skill | browser visual + reduced-motion check |
-| Clinic configuration | `CLINIC_PROFILE_SURFACE.md` + `DOMAIN_MODEL.md` | clinic-management skill | configuration round-trip + authorization check |
-| Clinic page guest tabs | `CLINIC_PROFILE_SURFACE.md` | clinic-surface/frontend skill | guest tab browser check |
-| Owner-only Edit | `CLINIC_PROFILE_SURFACE.md` | ownership/authorization skill | unauthorized route/write test |
-| PayPal subscriptions | `CLINIC_SUBSCRIPTIONS.md` | commerce/webhook skill | webhook tests + durable projection read-back |
-| Storage/media | Product Law | storage skill | upload/read policy verification |
-| Customer booking UX | booking + map + clinic-surface contracts | frontend/booking skill | browser end-to-end flow |
+| Product/execution governance | `PRODUCT_LAW.md`, `POLICY.md` | `skills/001-product-governance/SKILL.md` | reconciliation + path audit |
+| Firestore canonical data | `docs/contracts/DOMAIN_MODEL.md` | `skills/002-firestore-domain/SKILL.md` | durable read-back |
+| Auth / ownership | `docs/contracts/DOMAIN_MODEL.md` + Product Law | `skills/003-auth-ownership/SKILL.md` | auth + authorization tests |
+| Clinic public/editor surface | `docs/contracts/CLINIC_PROFILE_SURFACE.md` | `skills/004-clinic-surface/SKILL.md` | route/surface/owner tests |
+| Availability / booking correctness | `docs/contracts/BOOKING_AVAILABILITY.md` | `skills/005-booking-availability/SKILL.md` | contract + race/idempotency tests |
+| Clinic booking operations | Product Law + booking contracts | `skills/006-clinic-operations/SKILL.md` | operational round-trip/read-back |
+| Subscription / commerce | `docs/contracts/CLINIC_SUBSCRIPTIONS.md` | `skills/007-subscription-commerce/SKILL.md` | event tests + projection read-back |
+| Three.js spatial runtime | `docs/contracts/SPATIAL_3D_RUNTIME.md`, `docs/contracts/SPATIAL_SITE_ARCHITECTURE.md` | `skills/008-threejs-spatial-runtime/SKILL.md` | runtime + renderer evidence |
+| Camera / motion / traversal | `docs/contracts/SPATIAL_CAMERA_MOTION.md` | `skills/009-spatial-camera-motion/SKILL.md` | state/interaction/accessibility evidence |
+| MapLibre guest discovery | `docs/contracts/MAP_SPATIAL.md` | `skills/010-maplibre-discovery/SKILL.md` | search/filter/map interaction evidence |
+| Assets / lighting / materials | `docs/contracts/SPATIAL_LIGHTING_MATERIALS.md` | `skills/011-spatial-assets-lighting/SKILL.md` | visual/performance evidence |
+| Accessibility / verification | `docs/verification/PLAYWRIGHT.md` + feature contracts | `skills/012-accessibility-verification/SKILL.md` | browser/device/accessibility evidence |
+| Full project handover | `POLICY.md` | `skills/013-project-handover/SKILL.md` | complete ZIP + manifest/hash |
 
-## Execution rule
+## Skill rule
 
-Every recurring bounded procedure should resolve to a concrete skill before it becomes dependent on repeated ad-hoc instructions. A skill describes how authorized work is performed; it does not grant permission or override Product Law.
+A Skill defines **how to perform**, **what it is based on**, **what to do**, **what not to do**, **how to verify**, **how to recover**, and **what evidence to leave**. A Skill never grants product permission.
 
-## First skills to establish
+## Numbering rule
 
-1. booking availability and race-safety;
-2. Firestore canonical-state operations;
-3. clinic profile/surface and owner authorization;
-4. MapLibre spatial/frontend implementation;
-5. spatial Hero environment;
-6. PayPal webhook boundary;
-7. verification and browser evidence.
+Skill numbers identify reusable development roots. The Masterplan determines chronological invocation order. Numbers do not override chronology.

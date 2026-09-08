@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { HeroDiorama } from "@/components/hero/HeroDiorama";
 import { MedMapCanvas } from "@/components/map/MedMapCanvas";
 
@@ -8,179 +11,98 @@ const clinics = [
   { id: "lumen", name: "Lumen Skin & Wellness", treatment: "Skin consultation", price: "Contact clinic", distance: "2.1 km", availability: "Next opening 11:30" },
 ];
 
+type SpatialObjectId = "discovery" | "clinic" | "operations" | null;
+
+const SPATIAL_COPY: Record<Exclude<SpatialObjectId, null>, { eyebrow: string; title: string; body: string; action: string }> = {
+  discovery: { eyebrow: "DISCOVERY ROOM", title: "Find nearby clinics.", body: "Search clinic, treatment, or location context before authentication.", action: "Explore map" },
+  clinic: { eyebrow: "CLINIC ROOM", title: "Inspect one clinic.", body: "Review Profile, Services, Booking, About, and Contact.", action: "Open clinic" },
+  operations: { eyebrow: "OWNER WORKSPACE", title: "Run the booking queue.", body: "Clinic-side operations remain authenticated and owner-authorized.", action: "For clinics" },
+};
+
 export default function HomePage() {
+  const [spatialObject, setSpatialObject] = useState<SpatialObjectId>(null);
+  const [headerRevealed, setHeaderRevealed] = useState(false);
+
+  useEffect(() => {
+    const handleFocus = (event: Event) => setSpatialObject((event as CustomEvent<{ id: SpatialObjectId }>).detail?.id ?? null);
+    const handleScroll = () => setHeaderRevealed(window.scrollY > window.innerHeight * 0.08);
+    window.addEventListener("medmap-spatial-object-focus", handleFocus);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => {
+      window.removeEventListener("medmap-spatial-object-focus", handleFocus);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const activeCopy = spatialObject ? SPATIAL_COPY[spatialObject] : null;
+
   return (
     <main className="app-shell">
       <section className="hero-environment">
         <div className="hero-atmosphere" aria-hidden="true" />
-        <div className="hero-grid" aria-hidden="true" />
-        <div className="hero-orbit hero-orbit-one" aria-hidden="true" />
-        <div className="hero-orbit hero-orbit-two" aria-hidden="true" />
-        <div className="hero-beacon hero-beacon-one" aria-hidden="true" />
-        <div className="hero-beacon hero-beacon-two" aria-hidden="true" />
         <HeroDiorama />
         <MedMapCanvas />
 
-        <header className="hero-nav glass-panel">
+        <header className={`hero-nav glass-panel ${headerRevealed ? "hero-nav-revealed" : "hero-nav-arrival"}`}>
           <Link href="/" className="brand-lockup" aria-label="MedMap home">
             <span className="brand-mark">✦</span>
-            <div>
-              <p className="eyebrow">SPATIAL CLINIC DISCOVERY</p>
-              <h1>MedMap</h1>
-            </div>
+            <div><p className="eyebrow">SPATIAL CLINIC DISCOVERY</p><h1>MedMap</h1></div>
           </Link>
-          <div className="hero-nav-context">
-            <span className="context-pill">3D spatial mode</span>
-            <span className="context-pill">Clinic-first</span>
+          <div className="hero-nav-context" aria-label="Spatial site sections">
+            <button type="button" className="context-pill" onClick={() => window.dispatchEvent(new CustomEvent("medmap-spatial-set-pose", { detail: { pose: "discovery" } }))}>Discovery</button>
+            <button type="button" className="context-pill" onClick={() => window.dispatchEvent(new CustomEvent("medmap-spatial-set-pose", { detail: { pose: "clinic" } }))}>Clinic</button>
+            <span className="context-pill">3D Spatial</span>
           </div>
-          <button className="ghost-button" type="button">For clinics</button>
+          <button className="ghost-button" type="button" onClick={() => window.dispatchEvent(new CustomEvent("medmap-spatial-set-pose", { detail: { pose: "operations" } }))}>For clinics</button>
         </header>
 
         <div className="hero-copy glass-panel">
-          <div className="hero-copy-kicker"><span className="status-dot" /> DISCOVER AROUND YOU</div>
+          <div className="hero-copy-kicker"><span className="status-dot" /> FROM THE MAIN HALL</div>
           <p className="eyebrow">MAP-FIRST CARE DISCOVERY</p>
-          <h2>Find a clinic that can actually take your appointment.</h2>
-          <p className="hero-description">
-            Explore clinics in a living spatial view, inspect the services they publish, and move into a clinic page built around what is actually offered.
-          </p>
+          <h2>Find care nearby.</h2>
+          <p className="hero-description">Search clinics, inspect published services, then enter a clinic room before booking.</p>
           <div className="search-row">
-            <input aria-label="Search treatments" placeholder="Treatment, clinical matter, or clinic" />
-            <button type="button">Explore map</button>
+            <input aria-label="Search treatments" placeholder="Treatment, clinic, or location" />
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("medmap-spatial-set-pose", { detail: { pose: "discovery" } }))}>Explore map</button>
           </div>
-          <div className="hero-stats">
-            <span><strong>3</strong> clinics in view</span>
-            <span><strong>12</strong> service signals</span>
-            <span><strong>MapLibre</strong> WebGL</span>
-          </div>
+          <div className="hero-stats"><span><strong>3</strong> clinics in view</span><span><strong>Guest</strong> discovery</span><span><strong>MapLibre</strong> inside Spatial</span></div>
         </div>
 
+        {activeCopy && (
+          <aside className="spatial-object-panel glass-panel" aria-live="polite">
+            <p className="eyebrow">{activeCopy.eyebrow}</p><h3>{activeCopy.title}</h3><p>{activeCopy.body}</p>
+            {spatialObject === "clinic" ? <Link href="/clinics/northstar" className="secondary-action">{activeCopy.action}</Link> : <button className="secondary-action" type="button" onClick={() => setSpatialObject(null)}>{activeCopy.action}</button>}
+          </aside>
+        )}
+
         <div className="spatial-inspector glass-panel" aria-hidden="true">
-          <div className="inspector-line"><span>SPATIAL LAYER</span><strong>ACTIVE</strong></div>
-          <div className="inspector-line"><span>CAMERA</span><strong>58° PITCH</strong></div>
-          <div className="inspector-line"><span>CLINIC POINTS</span><strong>03</strong></div>
-          <div className="inspector-line"><span>BOOKING STATE</span><strong>DEMO</strong></div>
+          <div className="inspector-line"><span>SITE</span><strong>THREE.JS</strong></div>
+          <div className="inspector-line"><span>WEBGL</span><strong>2</strong></div>
+          <div className="inspector-line"><span>DISCOVERY</span><strong>MAPLIBRE</strong></div>
+          <div className="inspector-line"><span>STATE</span><strong>DEMO</strong></div>
         </div>
 
         <div className="floating-clinic-card glass-panel">
-          <div className="clinic-card-topline">
-            <span className="clinic-pulse" />
-            <span>Featured clinic</span>
-          </div>
-          <div className="clinic-identity-row">
-            <div className="clinic-avatar">NF</div>
-            <div>
-              <h3>Northstar Family Clinic</h3>
-              <p>General consultation · 0.8 km</p>
-            </div>
-          </div>
-          <div className="clinic-hero-meta">
-            <span>From ₱900</span>
-            <span>Next opening 09:30</span>
-          </div>
+          <div className="clinic-card-topline"><span className="clinic-pulse" /><span>Featured clinic</span></div>
+          <div className="clinic-identity-row"><div className="clinic-avatar">NF</div><div><h3>Northstar Family Clinic</h3><p>General consultation · 0.8 km</p></div></div>
+          <div className="clinic-hero-meta"><span>From ₱900</span><span>Next opening 09:30</span></div>
           <div className="mini-nav" aria-label="Northstar clinic sections">
-            {[
-              ["Profile", "/clinics/northstar#profile"],
-              ["Services", "/clinics/northstar#services"],
-              ["Booking", "/clinics/northstar#booking"],
-            ].map(([label, href]) => <Link href={href} key={label}>{label}</Link>)}
+            {[["Profile", "/clinics/northstar#profile"], ["Services", "/clinics/northstar#services"], ["Booking", "/clinics/northstar#booking"]].map(([label, href]) => <Link href={href} key={label}>{label}</Link>)}
           </div>
           <Link href="/clinics/northstar" className="secondary-action">Open clinic</Link>
         </div>
 
-        <div className="map-hud glass-panel">
-          <span className="status-dot" />
-          <span>MapLibre WebGL</span>
-          <span className="hud-separator">•</span>
-          <span>3D spatial mode</span>
-          <span className="hud-separator">•</span>
-          <span>Prototype data</span>
-        </div>
-
-        <div className="hero-scroll-cue">SCROLL TO DISCOVER <span>↓</span></div>
-
-        <style>{`
-          .hero-mesh-canvas,
-          .hero-orbit-one,
-          .hero-orbit-two,
-          .hero-beacon-one,
-          .hero-beacon-two,
-          .floating-clinic-card {
-            transition: transform 420ms ease, opacity 420ms ease, filter 420ms ease, box-shadow 420ms ease;
-          }
-
-          .hero-environment:has(.floating-clinic-card:hover) .hero-mesh-canvas,
-          .hero-environment:has(.floating-clinic-card:focus-within) .hero-mesh-canvas {
-            transform: scale(1.025) translate3d(-0.8%, -0.4%, 0);
-            filter: saturate(1.08) contrast(1.03);
-          }
-
-          .hero-environment:has(.floating-clinic-card:hover) .hero-orbit-one,
-          .hero-environment:has(.floating-clinic-card:focus-within) .hero-orbit-one {
-            transform: rotateX(67deg) rotateZ(-14deg) translate3d(-14px, -6px, 0);
-            opacity: 0.88;
-          }
-
-          .hero-environment:has(.floating-clinic-card:hover) .hero-orbit-two,
-          .hero-environment:has(.floating-clinic-card:focus-within) .hero-orbit-two {
-            transform: rotateX(67deg) rotateZ(-14deg) translate3d(-9px, -4px, 0);
-            opacity: 0.82;
-          }
-
-          .hero-environment:has(.floating-clinic-card:hover) .hero-beacon-one,
-          .hero-environment:has(.floating-clinic-card:focus-within) .hero-beacon-one {
-            transform: scale(1.18);
-          }
-
-          .hero-environment:has(.floating-clinic-card:hover) .hero-beacon-two,
-          .hero-environment:has(.floating-clinic-card:focus-within) .hero-beacon-two {
-            transform: scale(0.84);
-          }
-
-          .hero-environment:has(.floating-clinic-card:hover) .floating-clinic-card,
-          .hero-environment:has(.floating-clinic-card:focus-within) .floating-clinic-card {
-            transform: perspective(1200px) rotateY(-8deg) rotateX(4deg) translateZ(48px) translateY(-4px);
-            box-shadow: 0 56px 132px rgba(0, 20, 28, 0.34);
-          }
-
-          @media (prefers-reduced-motion: reduce) {
-            .hero-mesh-canvas,
-            .hero-orbit-one,
-            .hero-orbit-two,
-            .hero-beacon-one,
-            .hero-beacon-two,
-            .floating-clinic-card {
-              transition: none;
-            }
-          }
-        `}</style>
+        <div className="map-hud glass-panel"><span className="status-dot" /><span>MapLibre discovery</span><span className="hud-separator">•</span><span>Three.js Spatial</span><span className="hud-separator">•</span><span>Prototype data</span></div>
+        <div className="hero-scroll-cue">TRAVERSE THE HALL <span>↓</span></div>
       </section>
 
       <section className="discovery-section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">NEARBY CLINICS</p>
-            <h2>Step into the care layer.</h2>
-          </div>
-          <p>Each clinic gets one coherent public surface with Profile, Services, Booking, About, and Contact. Owners unlock Edit separately.</p>
-        </div>
+        <div className="section-heading"><div><p className="eyebrow">GUEST DISCOVERY</p><h2>Choose a clinic room.</h2></div><p>MapLibre is the geographic search and filtering engine inside the 3D Spatial site. Authentication begins when a guest proceeds toward booking.</p></div>
         <div className="clinic-list">
-          {clinics.map((clinic) => (
-            <article className="clinic-card glass-panel" key={clinic.id}>
-              <div className="clinic-card-topline">
-                <span className="clinic-pulse" />
-                <span>{clinic.distance}</span>
-              </div>
-              <h3>{clinic.name}</h3>
-              <p>{clinic.treatment}</p>
-              <div className="clinic-meta">
-                <span>{clinic.price}</span>
-                <span>{clinic.availability}</span>
-              </div>
-              <Link href={`/clinics/${clinic.id}`} className="secondary-action">View clinic</Link>
-            </article>
-          ))}
+          {clinics.map((clinic) => <article className="clinic-card glass-panel" key={clinic.id}><div className="clinic-card-topline"><span className="clinic-pulse" /><span>{clinic.distance}</span></div><h3>{clinic.name}</h3><p>{clinic.treatment}</p><div className="clinic-meta"><span>{clinic.price}</span><span>{clinic.availability}</span></div><Link href={`/clinics/${clinic.id}`} className="secondary-action">View clinic</Link></article>)}
         </div>
-        <p className="demo-note">Frontend spatial prototype only. Booking writes, ownership enforcement, and live clinic data remain deliberately parked for later governed phases.</p>
+        <p className="demo-note">Spatial baseline: authored Three.js environment with semantic fallback. Live Firestore, authentication, booking writes, and subscriptions remain governed by later phases.</p>
       </section>
     </main>
   );
