@@ -5,7 +5,6 @@ import * as THREE from "three";
 
 type PoseName = "arrival" | "hall" | "discovery" | "clinic" | "overview";
 type SpatialId = "discovery" | "clinic" | "operations";
-
 type Pose = { position: THREE.Vector3; target: THREE.Vector3; fov: number };
 
 const POSES: Record<PoseName, Pose> = {
@@ -82,13 +81,13 @@ export function HeroDiorama() {
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return;
     const context = canvas.getContext("webgl2", { alpha: true, antialias: true, powerPreference: "high-performance" });
-    if (!context) { canvas.dataset.webgl = "unavailable"; canvas.dataset.environmentVersion = "4"; return; }
+    if (!context) { canvas.dataset.webgl = "unavailable"; canvas.dataset.environmentVersion = "5"; return; }
 
-    canvas.dataset.webgl = "active"; canvas.dataset.environmentVersion = "4"; canvas.dataset.cameraPov = "arrival"; canvas.dataset.cameraProgress = "0";
+    canvas.dataset.webgl = "active"; canvas.dataset.environmentVersion = "5"; canvas.dataset.cameraPov = "arrival"; canvas.dataset.cameraProgress = "0";
     const renderer = new THREE.WebGLRenderer({ canvas, context, alpha: true, antialias: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.03;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setSize(canvas.clientWidth || 1, canvas.clientHeight || 1, false); renderer.setClearColor(0x000000, 0); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.03;
 
-    const scene = new THREE.Scene(); scene.background = new THREE.Color(0xb6d0cf); scene.fog = new THREE.FogExp2(0xb6d0cf, 0.021);
+    const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(POSES.arrival.fov, 1, 0.1, 100); camera.position.copy(POSES.arrival.position);
     scene.add(new THREE.HemisphereLight(0xf5f2ea, 0x456067, 2.0));
     const sun = new THREE.DirectionalLight(0xffedd4, 3.3); sun.position.set(-5, 9, 8); scene.add(sun);
@@ -101,13 +100,13 @@ export function HeroDiorama() {
     const setPose = (next: PoseName) => { if (next === targetPose && transition >= 1) return; fromPose = targetPose; targetPose = next; transition = 0; };
     const setObject = (id: SpatialId | null) => { active = id; setPose(id === "discovery" ? "discovery" : id === "clinic" ? "clinic" : id === "operations" ? "overview" : "hall"); window.dispatchEvent(new CustomEvent("medmap-spatial-object-focus", { detail: { id } })); };
 
-    const onPointerMove = (event: PointerEvent) => { const r = canvas.getBoundingClientRect(); px = Math.max(-0.18, Math.min(0.18, ((((event.clientX - r.left) / r.width) * 2) - 1) * 0.14)); py = Math.max(-0.12, Math.min(0.12, -(((((event.clientY - r.top) / r.height) * 2) - 1) * 0.08))); };
+    const onPointerMove = (event: PointerEvent) => { const r = canvas.getBoundingClientRect(); if (!r.width || !r.height) return; px = Math.max(-0.18, Math.min(0.18, ((((event.clientX - r.left) / r.width) * 2) - 1) * 0.14)); py = Math.max(-0.12, Math.min(0.12, -(((((event.clientY - r.top) / r.height) * 2) - 1) * 0.08))); };
     const onClick = (event: MouseEvent) => {
       if (reducedMotion.matches) return;
-      const r = canvas.getBoundingClientRect(); pointer.set((((event.clientX - r.left) / r.width) * 2) - 1, -(((((event.clientY - r.top) / r.height) * 2) - 1))); raycaster.setFromCamera(pointer, camera);
+      const r = canvas.getBoundingClientRect(); if (!r.width || !r.height) return; pointer.set((((event.clientX - r.left) / r.width) * 2) - 1, -(((((event.clientY - r.top) / r.height) * 2) - 1))); raycaster.setFromCamera(pointer, camera);
       const hit = raycaster.intersectObjects([...spatialGroups.values()], true)[0]; let node: THREE.Object3D | null = hit?.object ?? null; while (node && !node.userData.spatialId) node = node.parent; if (node?.userData.spatialId) setObject(node.userData.spatialId as SpatialId);
     };
-    const onPoseRequest = (event: Event) => { const pose = (event as CustomEvent<{ pose?: string }>).detail?.pose; if (pose === "discovery") setObject("discovery"); else if (pose === "clinic") setObject("clinic"); else if (pose === "operations") setObject("operations"); };
+    const onPoseRequest = (event: Event) => { const pose = (event as CustomEvent<{ pose?: string }>).detail?.pose; if (pose === "discovery") setObject("discovery"); else if (pose === "clinic") setObject("clinic"); else if (pose === "operations") setObject("operations"); else if (pose === "hall") setObject(null); else if (pose === "arrival") setPose("arrival"); };
     const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setObject(null); };
     const onScroll = () => {
       if (reducedMotion.matches) return; const hero = canvas.closest(".hero-environment") as HTMLElement | null; if (!hero) return; const rect = hero.getBoundingClientRect(); progress = Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height - window.innerHeight))); if (progress < 0.08) setPose("arrival"); else if (progress < 0.42) setPose("hall"); else setPose("overview");
@@ -117,7 +116,7 @@ export function HeroDiorama() {
     canvas.addEventListener("pointermove", onPointerMove); canvas.addEventListener("click", onClick); window.addEventListener("medmap-spatial-set-pose", onPoseRequest); window.addEventListener("keydown", onKeyDown); window.addEventListener("scroll", onScroll, { passive: true }); window.addEventListener("resize", onResize); reducedMotion.addEventListener("change", onScroll); onResize(); onScroll();
     const clock = new THREE.Clock(), desiredPosition = new THREE.Vector3(), desiredTarget = new THREE.Vector3(), scale = new THREE.Vector3();
     const animate = () => {
-      const elapsed = clock.getElapsedTime(); transition = reducedMotion.matches ? 1 : Math.min(1, transition + 0.035); const a = POSES[fromPose], b = POSES[targetPose], t = smoothstep(transition);
+      transition = reducedMotion.matches ? 1 : Math.min(1, transition + 0.035); const a = POSES[fromPose], b = POSES[targetPose], t = smoothstep(transition);
       desiredPosition.lerpVectors(a.position, b.position, t); desiredTarget.lerpVectors(a.target, b.target, t);
       if (!reducedMotion.matches) { desiredPosition.x += px * 0.45; desiredPosition.y += py * 0.22; desiredTarget.x += px * 0.32; desiredTarget.y += py * 0.12; }
       camera.position.lerp(desiredPosition, 0.24); camera.lookAt(desiredTarget); camera.fov = a.fov + (b.fov - a.fov) * t; camera.updateProjectionMatrix();
@@ -134,5 +133,5 @@ export function HeroDiorama() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="hero-mesh-canvas" data-testid="hero-mesh-canvas" data-webgl="pending" data-environment-version="4" data-mesh-count="0" data-mesh-triangles="0" data-camera-pov="arrival" data-camera-progress="0" aria-label="MedMap cinematic 3D spatial environment" />;
+  return <canvas ref={canvasRef} className="hero-mesh-canvas" data-testid="hero-mesh-canvas" data-webgl="pending" data-environment-version="5" data-mesh-count="0" data-mesh-triangles="0" data-camera-pov="arrival" data-camera-progress="0" aria-label="MedMap cinematic 3D spatial environment" />;
 }
