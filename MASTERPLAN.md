@@ -1,199 +1,194 @@
 # MASTERPLAN — MedMap
 
-`PRODUCT_LAW.md` is the product authority. This plan defines the approved sequence for turning that law into a verified product.
+`PRODUCT_LAW.md` defines what MedMap is. `MASTERPLAN.md` defines the chronological execution checklist that turns the law into a verified product.
 
-## Product north star
+The Masterplan may branch into smaller content/context slices whenever a phase becomes complex. A branch is a planning branch, not a source-control/file branch. Every child slice remains attached to its parent phase and must declare its return/merge criterion.
 
-Make clinic discovery spatial, treatment-aware, profile-rich, contactable, and availability-true: a customer should be able to locate a clinic, inspect its identity and services, understand how to contact it, see a real bookable time, and create a booking without the UI inventing availability.
-
-## Governance lineage
+## Execution chain
 
 ```text
-TeamAi → authority hierarchy, canonical-state boundaries, ORUCAVEAM, evidence, handover, endorsement
-Universal ToolKit → reusable governance skeleton, layer separation, minimalism, continuity
-HomeFinder-Official → spatial/profile concerns, staged reconciliation, preservation of useful work
+PRODUCT_LAW
+  ↓
+MASTERPLAN phase / slice
+  ↓
+CONTRACT
+  ↓
+SKILL
+  ↓
+IMPLEMENTATION
+  ↓
+VERIFICATION
+  ↓
+ACCEPTANCE
+  ↓
+FULL PROJECT ZIP HANDOVER
 ```
 
-These are upstream patterns only. `PRODUCT_LAW.md` remains the MedMap authority.
+## Mandatory slice record
+Every slice in this plan should identify:
 
-## Authority map
+`ID | Parent | Objective | Dependencies | Contract | Skill | Verification | Exit | Handover ZIP`
 
-```text
-Human/product authority
-        ↓
-PRODUCT_LAW.md
-        ↓
-MASTERPLAN.md / POLICY.md
-        ↓
-Contracts + skills
-        ↓
-Implementation
-        ↓
-Verification + evidence
-        ↓
-Handover / endorsement
-```
+## Phase 001 — Product / execution foundation
 
-## Runtime architecture direction
+- [x] Reconcile Product Law as highest product authority.
+- [x] Separate Product Law, Masterplan, Contracts, Skills, Policy, implementation, verification, and handover responsibilities.
+- [x] Remove GitHub as product/source authority from product execution doctrine.
+- [x] Define mandatory full-project ZIP handover.
+- [x] Define spatial site architecture at Product Law level.
+- [x] Census initial rooms/pages/guest versus authenticated surfaces.
+- [x] Define patient / clinic-owner authentication entry concept.
+- [x] Define no-internal-messaging boundary and approved clinic contact record.
+- [x] Define booking register/spreadsheet-like clinic operations concept.
+- [x] Define subscription offer and five-tier intent while leaving unapproved tier numbers open.
+- [x] Establish skill registry and numbered development roots.
+- [ ] Accept the sweep and freeze the execution wiring before spatial implementation.
 
-```text
-Next.js / React
-   ├── MapLibre GL JS / WebGL spatial surface
-   ├── Discovery + clinic pages
-   ├── Customer booking
-   └── Clinic owner editor
-          │
-          ▼
-Trusted application boundary
-          │
-          ├── Firebase Auth
-          ├── Firestore canonical domain state
-          ├── Supabase Edge Functions
-          │       └── PayPal / protected integrations
-          ├── Supabase Storage
-          │       └── clinic media
-          └── PayPal external subscription events
-```
+### 001.S1 — Document authority reconciliation
+- Contract: `docs/SKILL_WIRING.md` + canonical document paths.
+- Skill: `skills/001-product-governance/SKILL.md`.
+- Exit: all authority statements point to current documents and no document silently owns another layer's responsibilities.
 
-## Phase 001 — Foundation / governance / contracts
+### 001.S2 — Site census and spatial question registry
+- Contract: `docs/contracts/SPATIAL_SITE_ARCHITECTURE.md`.
+- Skill: `skills/008-threejs-spatial-runtime/SKILL.md` + `skills/009-spatial-camera-motion/SKILL.md`.
+- Exit: initial room/section census and camera/traversal/occlusion questions exist before major scene construction.
 
-1. [x] Establish `PRODUCT_LAW.md`.
-2. [x] Establish governance and execution baseline.
-3. [x] Define booking/availability contract.
-4. [x] Define domain model and Firestore boundaries.
-5. [x] Define map/spatial contract.
-6. [x] Define subscription/webhook contract.
-7. [x] Establish Next.js + MapLibre shell.
-8. [x] Add repository CI validation path.
-9. [x] Reconcile clinic-page tab/visibility law.
-10. [x] Add clinic-page surface contract and navigation ownership model.
-11. [x] Reconcile assistant guide, policy, skill wiring, and product knowledge with clinic-surface governance.
+## Phase 002 — Spatial runtime foundations
 
-## Phase 002 — Spatial frontend prototype — BLOCKED PENDING FRESH CI EVIDENCE
+### 002.S1 — Three.js runtime root
+- Contract: `HERO_ENVIRONMENT.md` + `SPATIAL_3D_RUNTIME.md`.
+- Skill: `skills/008-threejs-spatial-runtime/SKILL.md`.
+- Exit: renderer lifecycle, resize, DPR, context-loss/degradation boundary, scene root, render loop, cleanup.
 
-1. [x] Map-first landing Hero.
-2. [x] MapLibre pitched spatial camera.
-3. [x] Spatial glass-skeuomorphic shell.
-4. [x] Featured clinic Hero presentation.
-5. [x] Lightweight CSS spatial diorama/depth layer.
-6. [x] Clinic public route prototype.
-7. [x] Guest surfaces: Profile, Services, Booking, About, Contact.
-8. [x] Owner-only Edit boundary represented in product model and guest surface.
-9. [x] Refine Hero scene composition and spatial focus transitions.
-10. [x] Responsive mobile spatial composition.
-11. [x] Reduced-motion/degraded-map browser verification.
-12. [ ] Freeze visual frontend baseline after fresh browser evidence.
+### 002.S2 — Spatial motion root
+- Contract: `SPATIAL_CAMERA_MOTION.md`.
+- Skill: `skills/009-spatial-camera-motion/SKILL.md`.
+- Exit: named presentation state transitions, interruption/replacement, bounded motion, reduced-motion behavior.
 
-### Phase 002 acceptance evidence
+### 002.S3 — Architectural room root
+- Contract: `SPATIAL_SITE_ARCHITECTURE.md`.
+- Skill: `skills/008-threejs-spatial-runtime/SKILL.md`.
+- Exit: main hall, arrival corridor, wall/floor/ceiling boundaries, no normal camera-through-wall route.
 
-Historical green runs remain evidence for the historical commits they tested:
+### 002.S4 — Object interaction root
+- Contract: `SPATIAL_3D_RUNTIME.md`.
+- Skill: `skills/009-spatial-camera-motion/SKILL.md`.
+- Exit: at least one object can focus, transform, animate, reveal semantic child UI, and recover to stable state.
 
-- **Run #80** on commit `152f324ed73248a7b26ea675867db6db45e0bdd2`: build and browser verification successful, including computed clinic-focus depth.
-- **Run #81** on commit `f093cffdd8173e42c3b0ce26fcdf06ced7440783`: build and browser verification successful after governance reconciliation.
-- **Run #84** on commit `412d227556dfb53a3736af641c10089f1b0c990e`: build and browser verification successful after the mobile Hero stacking correction and regression coverage.
+### 002.S5 — Cinematic lighting/material root
+- Contract: `SPATIAL_LIGHTING_MATERIALS.md`.
+- Skill: `skills/011-spatial-assets-lighting/SKILL.md`.
+- Exit: lighting/material system supports contrast, reflection, glass, texture readability, and restrained clinical clarity.
 
-These historical runs do not accept later spatial changes.
-
-The current acceptance gate is GitHub Issue #2. The viewport-matrix commit `8f707f36971233aeaedfd27a11992c48e169c45e` must earn fresh green browser and deployment evidence before this phase can be marked accepted.
-
-Phase 002 spatial verification must cover camera POV, bounded transitions, traversal, animation behavior, reduced motion, WebGL2 degradation, semantic fallback, keyboard focus, responsive layout integrity, and representative viewport classes. Chromium viewport coverage must not be described as all-browser coverage.
-
-Backend/domain implementation remains deliberately outside this phase.
+### 002.S6 — Accessibility/degradation root
+- Contract: `HERO_ENVIRONMENT.md`.
+- Skill: `skills/012-accessibility-verification/SKILL.md`.
+- Exit: semantic UI remains usable without Three.js; reduced motion removes non-essential motion; no spatial interaction is required for core meaning.
 
 ## Phase 003 — Clinic identity and supply
 
-1. Clinic registration and authenticated ownership.
-2. Clinic publication/active state.
-3. Clinic hero and profile identity.
-4. Profile tab: logo, background, name, basic information, links, service summary.
-5. Services tab: enabled public services/treatments, duration, price-state, bookability.
-6. About tab: public clinic bio and approved descriptive content.
-7. Contact tab: one-or-more validated contact channels.
-8. Owner-only Edit surface for allowed clinic profile/content settings.
-9. Owner authorization tests: guest cannot access or mutate Edit.
-10. Media references and Supabase Storage integration.
+- [ ] Authenticated registration: Email + Google.
+- [ ] Registration roles: Patient / Clinic Owner.
+- [ ] Clinic ownership binding.
+- [ ] Clinic registration, approval, publication, active/suspended states.
+- [ ] Canonical clinic profile and hero identity.
+- [ ] Services/treatments public configuration.
+- [ ] Approved contact-channel records.
+- [ ] Owner-only Edit surface and backend authorization.
+- [ ] Supabase Storage media references.
 
-## Phase 004 — Clinic scheduling engine
+## Phase 004 — Clinic scheduling and availability
 
-1. Weekly open/closed schedule.
-2. Multiple opening intervals per day.
-3. Closed dates and special-hours exceptions.
-4. Clinic timezone.
-5. Treatment duration.
-6. Booking interval/slot granularity.
-7. Exclusive capacity.
-8. Concurrent capacity.
-9. Optional treatment-specific capacity.
-10. Availability calculation implementation.
-11. Owner edits invalidate or recheck stale availability.
+- [ ] Clinic timezone.
+- [ ] Weekly open/closed schedule.
+- [ ] Multiple intervals.
+- [ ] Closed dates and special hours.
+- [ ] Service duration.
+- [ ] Booking interval.
+- [ ] Exclusive/concurrent/treatment-specific capacity.
+- [ ] Durable availability computation.
+- [ ] Availability snapshot semantics and stale-read invalidation.
 
-## Phase 005 — Customer discovery
+## Phase 005 — Guest discovery engine
 
-1. Map-first landing experience backed by real clinic data.
-2. MapLibre 3D camera and clinic markers.
-3. Search by service/treatment and location.
-4. Map/list synchronization.
-5. Clinic hero and tabbed detail surface.
-6. Services filtering and public-state rules.
-7. Contact and About presentation.
-8. Availability-aware Booking tab.
-9. Responsive mobile spatial navigation.
+- [ ] MapLibre discovery surface inside the 3D Spatial web architecture.
+- [ ] Guest search by clinic/service/treatment/location context.
+- [ ] Geographic filters and clinic result synchronization.
+- [ ] Clinic selection and clinic room entry.
+- [ ] Canonical Profile / Services / Booking / About / Contact surfaces.
+- [ ] Explicit price-state rendering.
 
-## Phase 006 — Booking correctness
+## Phase 006 — Authentication and booking submission
 
-1. Trusted booking-creation operation.
-2. Authoritative re-check of clinic, service, schedule, exception, duration, interval, and capacity.
-3. Concurrency-safe last-capacity behavior.
-4. Idempotency for customer retries.
-5. Booking lifecycle and confirmation.
-6. Failure-path UX for a slot lost during submission.
-7. Independent durable Firestore verification of durable booking state.
+- [ ] Booking authentication gate after clinic selection.
+- [ ] Email login/registration.
+- [ ] Google login/registration.
+- [ ] Patient booking identity boundary.
+- [ ] Trusted booking creation.
+- [ ] Server re-check.
+- [ ] Concurrency safety.
+- [ ] Idempotency.
+- [ ] Requested / confirmed / rejected / cancelled lifecycle.
+- [ ] Durable booking record.
 
-## Phase 007 — Clinic operations
+## Phase 007 — Clinic booking operations
 
-1. Owner booking management.
-2. Calendar occupancy view.
-3. Closed-date and special-hours editor.
-4. Capacity editor.
-5. Service availability controls.
-6. Profile/About/Contact editor.
-7. Publication preview from owner perspective.
-8. Audit/reconciliation for material scheduling changes.
+- [ ] Spreadsheet-like booking register.
+- [ ] Calendar/occupancy view.
+- [ ] Booking approval/management workflow as defined by final contract.
+- [ ] Queue visibility and operational reduction tools.
+- [ ] Schedule/capacity/service editors.
+- [ ] Booking read-back and audit trail.
 
-## Phase 008 — Clinic subscriptions
+## Phase 008 — Subscription / entitlement
 
-1. Clinic plan model.
-2. Server-owned PayPal subscription correlation.
-3. Supabase Edge webhook authenticity verification.
-4. Idempotent commerce-event recording.
-5. Firestore entitlement projection.
-6. Feature gating from authoritative subscription state.
-7. Live PayPal evidence when credentials/environment permit.
+- [ ] Base introductory PHP99 offer.
+- [ ] One-time 2-month free introductory benefit.
+- [ ] Regular PHP99 monthly billing thereafter.
+- [ ] Up to five tiers.
+- [ ] Tier-specific daily incoming booking allowance.
+- [ ] PayPal correlation/authenticity/idempotency.
+- [ ] Firestore entitlement projection.
+- [ ] Suspension/expiry behavior.
+- [ ] Existing-booking behavior during entitlement changes.
 
-## Phase 009 — Spatial experience and polish
+## Phase 009 — Spatial production expansion
 
-1. Approved base style and camera system.
-2. 3D building/terrain enhancement where useful.
-3. Cluster behavior.
-4. Spatial clinic focus transitions.
-5. Glass-skeuomorphic visual system.
-6. Reduced-motion and degraded-map behavior.
-7. Keyboard/accessibility verification.
-8. Mobile map/list transition.
+- [ ] Approved reusable 3D asset library.
+- [ ] Room-specific scenes.
+- [ ] Clinic/service spatial objects.
+- [ ] MapLibre geographic 3D enhancements where useful.
+- [ ] Clustering and spatial focus.
+- [ ] Advanced room traversal.
+- [ ] Mobile/touch adaptation.
+- [ ] Asset provenance, LOD, performance and visual QA.
 
-## Phase 010 — Verification and release
+## Phase 010 — Release and acceptance
 
-1. TypeScript/build checks.
-2. Contract tests.
-3. Browser verification of guest clinic tabs.
-4. Browser verification of owner-only Edit visibility and authorization.
-5. Booking concurrency/idempotency tests.
-6. Independent durable Firestore checks.
-7. Subscription webhook verification.
-8. Handover / endorsement.
+- [ ] Cross-contract consistency sweep.
+- [ ] TypeScript/build.
+- [ ] Browser verification.
+- [ ] Accessibility/reduced motion.
+- [ ] Booking races/idempotency.
+- [ ] Authorization.
+- [ ] Firestore durable read-back.
+- [ ] PayPal event verification.
+- [ ] Failure-path verification.
+- [ ] Full-project ZIP handover and final acceptance record.
+
+## Branching rule
+When a slice becomes complex, create content branches such as:
+
+```text
+002.S2 Camera Root
+  ├── 002.S2.a pose model
+  ├── 002.S2.b transition/interruption
+  ├── 002.S2.c wall/collision constraints
+  └── 002.S2.d reduced-motion mapping
+```
+
+These are planning branches. The parent slice remains the chronological owner and cannot be marked complete until all required children return with their verification and handover evidence.
 
 ## Completion rule
-
-A phase is not complete because the screens exist. Completion requires the governing law/contract, implementation, verification evidence, and recorded acceptance to agree.
-
-For any feature involving clinic ownership or booking, UI visibility is never the authorization proof and a successful browser render is never proof of durable backend correctness.
+A phase/slice is complete only when Product Law, contract, skill, implementation, verification evidence, unresolved questions, and full-project ZIP handover agree. Historical evidence can support its original scope but does not automatically accept later changes.
