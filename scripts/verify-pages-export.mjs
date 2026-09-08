@@ -3,7 +3,10 @@ import { resolve } from "node:path";
 
 const outDir = resolve("out");
 const indexPath = resolve(outDir, "index.html");
-const clinicPath = resolve(outDir, "clinics", "northstar.html");
+const clinicRoutePaths = [
+  resolve(outDir, "clinics", "northstar", "index.html"),
+  resolve(outDir, "clinics", "northstar.html"),
+];
 
 const fail = (message) => {
   console.error(`Pages export verification failed: ${message}`);
@@ -18,8 +21,9 @@ if (!existsSync(indexPath)) {
   fail("out/index.html is missing.");
 }
 
-if (!existsSync(clinicPath)) {
-  fail("out/clinics/northstar.html is missing.");
+const clinicPath = clinicRoutePaths.find((path) => existsSync(path));
+if (!clinicPath) {
+  fail("the Northstar clinic route is missing from the static export (expected out/clinics/northstar/index.html or out/clinics/northstar.html).");
 }
 
 const index = readFileSync(indexPath, "utf8");
@@ -51,8 +55,8 @@ for (const marker of [
   "Contact",
 ]) {
   if (!clinic.includes(marker)) {
-    fail(`out/clinics/northstar.html is missing expected clinic marker: ${marker}`);
+    fail(`Northstar clinic export is missing expected clinic marker: ${marker}`);
   }
 }
 
-console.log("Pages export verification passed: MedMap landing page and clinic route are present in out/.");
+console.log(`Pages export verification passed: MedMap landing page and Northstar clinic route are present (${clinicPath}).`);
