@@ -1,84 +1,222 @@
 # POLICY — MedMap
 
-This is the execution constitution beneath `PRODUCT_LAW.md`. It defines how authorized work is performed without becoming a second product law.
+`POLICY.md` is the ORUCAVEAM execution constitution and wiring document. It does not redefine MedMap product meaning; product meaning belongs to `PRODUCT_LAW.md`.
 
-## Authority order
+## Authority wiring
 
-1. `PRODUCT_LAW.md`
-2. `POLICY.md`
-3. `MASTERPLAN.md` and approved contracts
-4. Endorsed `PRODUCT-KNOWLEDGE.md`
-5. Current checkpoint/handover
-6. Skills and implementation detail
+```text
+PRODUCT_LAW.md
+  = product meaning / invariants / product-level questions
 
-When sources conflict, stop, identify the authority boundary, reconcile the conflict, and re-verify. Never resolve a product conflict through recency or convenience alone.
+MASTERPLAN.md
+  = chronological execution order / phases / slices / planning branches
+
+docs/contracts/
+  = detailed requirements and interfaces
+
+skills/
+  = how to perform the work, basis, do / don't, verification, recovery
+
+src/
+  = implementation
+
+tests/ + verification evidence
+  = proof of stated claims
+
+Full project ZIP
+  = mandatory continuity / handover artifact
+```
+
+A lower layer may elaborate a higher-layer decision but may not silently change it.
 
 ## ORUCAVEAM
 
-Every non-trivial execution step answers:
+Every non-trivial execution action must be framed as:
 
-- **O — Objective:** exact bounded outcome.
-- **R — Restrictions:** what must not be changed, bypassed, guessed, or exposed.
-- **U — User Authority:** why the action is authorized.
-- **C — Canonical Authority:** which source owns the meaning or state.
-- **A — Action:** smallest coherent operation.
-- **V — Verification:** evidence that proves the claimed result.
-- **E — Efficiency:** avoid unnecessary work without weakening correctness.
-- **A — Audit:** preserve traceable paths, decisions, and evidence.
-- **M — Minimalistic Resource Use:** use the minimum sufficient authoritative reads, writes, tests, builds, external calls, and context needed to complete and prove the task.
+### O — Objective
 
-M never means skipping required correctness or security checks.
+State the exact bounded outcome being attempted.
 
-## Product-critical rules
+### R — Restrictions
 
-### Availability is backend truth
-The client may display a calendar, but it may not create the truth of availability. Server logic must evaluate clinic schedule, exceptions, treatment rules, capacity, existing bookings, and subscription/product eligibility before accepting a booking.
+State what may not be changed, bypassed, guessed, fabricated, exposed, or generalized.
 
-### Booking is a reservation, not a UI selection
-Selecting a time in the browser does not reserve it. A successful booking requires a trusted write and a durable state transition.
+### U — User Authority
 
-### No double-booking by race
-Booking acceptance must be designed for concurrent requests. A correct result must remain correct when two customers attempt the same capacity at nearly the same time.
+State why this action is authorized by the current user request or already-approved project decision.
 
-### Clinic configuration is clinic-owned policy
-Clinic operators can configure availability, closed dates, treatment availability, pricing visibility, interval, and concurrency within the product's supported constraints. Customer UI cannot silently override clinic policy.
+### C — Canonical Authority
 
-### Clinic page surface is governed
-Every published clinic has one canonical hero and five guest-visible surfaces:
+Identify the document, contract, durable state, or external authority that owns the meaning being changed or observed.
 
-`Profile | Services | Booking | About | Contact`
+### A — Action
 
-`Edit` is an owner-only management surface. Guest UI must not expose it as a capability, but UI hiding is never authorization. Canonical ownership plus authenticated identity must independently enforce owner mutations.
+Perform the smallest coherent action that can achieve the objective without creating unrelated changes.
 
-Profile and About remain distinct public responsibilities. Services shows only clinic-enabled public services. Booking uses server-derived availability. Contact requires at least one valid published contact channel.
+### V — Verification
 
-### Clinical safety boundary
-MedMap may categorize and search services, but it must not diagnose, prescribe, claim clinical suitability, or present platform logic as professional medical advice.
+Verify the exact claim using evidence appropriate to that claim. Implementation is not verification. Rendering is not persistence proof. A unit/contract result is not automatically browser proof.
 
-## Service authority
+### E — Efficiency
 
-| Surface | MedMap role |
-|---|---|
-| Firebase Auth | Customer/clinic identity and UID |
-| Firestore | Canonical clinic, treatment, schedule, booking, and subscription-projection state |
-| Supabase Storage | Clinic media/assets only |
-| Supabase Edge Functions | Trusted server boundary for protected integrations/operations |
-| PayPal | External subscription/payment-event authority |
-| MapLibre GL JS | Spatial rendering/presentation authority |
-| GitHub | Source/change authority |
+Avoid unnecessary reads, writes, refactors, dependencies, asset generation, tool calls, and context churn. Efficiency never licenses skipping a required correctness, security, accessibility, or recovery step.
 
-A technical service may not silently become the authority for another domain.
+### A — Audit
 
-## Governance/product separation
+Preserve decision context, paths, identifiers, changed files, verification results, unresolved questions, and recovery information sufficient for the next execution boundary.
 
-Governance documents, findings, evidence, and skills stay outside the product source tree. Product business logic stays in the application source tree. Do not create new top-level structures casually.
+### M — Minimalistic Resource Use
 
-## Verification boundary
+Use the minimum sufficient computation, external calls, storage, test scope, and evidence necessary to safely complete and prove the action.
 
-Use static/type/build checks for structural correctness, contract tests for business rules, independent Firestore reads for durable outcomes, and browser verification for actual UI flows. A screenshot does not prove backend persistence, authorization, payment success, or booking correctness.
+## Skill wiring
 
-## Evidence lifecycle
+Each execution slice resolves its applicable Skill before implementation.
 
-`planned ≠ implemented ≠ verified ≠ runtime-proven ≠ completed ≠ generalized`
+```text
+MASTERPLAN slice
+  ↓
+named Contract(s)
+  ↓
+named Skill(s)
+  ↓
+implementation
+  ↓
+verification
+  ↓
+acceptance
+  ↓
+full ZIP handover
+```
 
-Validated reusable lessons may be distilled into `PRODUCT-KNOWLEDGE.md`; project-specific observations should remain project-specific.
+Skills are operational playbooks, not product authority.
+
+A Skill must state at least:
+
+```text
+Purpose
+Based on
+Scope
+Preconditions
+Inputs
+Do
+Do not
+Verification
+Failure handling
+Evidence produced
+Rollback / recovery
+Exit criteria
+```
+
+## Spatial wiring
+
+The product-level spatial architecture comes from `PRODUCT_LAW.md`.
+
+The detailed spatial implementation is wired through:
+
+```text
+Three.js / WebGL2 Skill
+Spatial camera / motion Skill
+Spatial asset / lighting Skill
+MapLibre discovery Skill
+Accessibility / verification Skill
+```
+
+MapLibre remains a guest discovery/search/filter engine inside the larger Three.js spatial website architecture.
+
+## Domain wiring
+
+```text
+Authentication / ownership
+        ↓
+Firestore canonical domain state
+        ↓
+trusted backend operations
+        ↓
+booking / clinic operations / entitlement
+```
+
+External commerce events must be authenticated and projected through the defined trusted boundary before becoming MedMap entitlement state.
+
+## Evidence wiring
+
+Use evidence appropriate to the layer:
+
+```text
+document change → path/content reconciliation
+contract → focused contract verification
+implementation → type/build/static checks
+UI → browser evidence
+backend persistence → independent durable read-back
+payment → verified external event path
+```
+
+Do not promote evidence beyond what it actually proves.
+
+## Conflict wiring
+
+When a discrepancy appears:
+
+```text
+STOP
+→ identify authority
+→ record discrepancy
+→ determine blast radius
+→ resolve at the correct layer
+→ make smallest coherent change
+→ re-verify
+```
+
+Recency, convenience, prior assumptions, a green test, or a deployment result do not silently override canonical authority.
+
+## Mandatory project handover
+
+Every project mutation requires a full project ZIP handover.
+
+This includes:
+
+```text
+edit
+fix
+addition
+removal
+refactor
+document update
+contract update
+skill update
+code update
+test update
+configuration update
+asset update
+```
+
+The handover is the **complete project package**, not only changed files.
+
+A slice cannot be reported as fully handed over until the complete ZIP is produced and its archive contents are inspected enough to establish continuity.
+
+## Planning branches
+
+Masterplan branches are content/context branches only:
+
+```text
+002.S2 Camera Root
+  ├─ 002.S2.a pose model
+  ├─ 002.S2.b transitions
+  ├─ 002.S2.c architectural traversal constraints
+  └─ 002.S2.d reduced motion
+```
+
+They do not require a source-control branch and do not create a second authority tree.
+
+## Final discipline
+
+```text
+follow the law
+→ follow the chronological slice
+→ follow the contract
+→ execute through the Skill
+→ verify the exact claim
+→ preserve unresolved questions
+→ reconcile the project
+→ hand over the full ZIP
+```
