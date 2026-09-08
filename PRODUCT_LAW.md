@@ -1,442 +1,398 @@
 # PRODUCT LAW — MedMap
 
-**Status:** Initial product authority / clinic-surface reconciliation
+**Status:** Baseline product authority, spatial architecture, clinic, booking, and commerce reconciliation
 
-`PRODUCT_LAW.md` is the highest product authority for MedMap. Code, UI, database choices, providers, deployment surfaces, skills, tools, and documentation MUST NOT silently override it.
-
-This law adapts validated governance patterns from TeamAi, Universal ToolKit, and HomeFinder-Official: explicit authority boundaries, governance/development separation, evidence-backed completion, spatial responsibility, profile ownership, minimal resource use, and recoverable handover. Those repositories provide reusable engineering discipline, not authority over MedMap's product meaning.
+`PRODUCT_LAW.md` is MedMap's highest product authority. It defines product meaning and invariants. Masterplan defines chronology. Contracts define detailed requirements. Skills define how work is performed. Policy defines ORUCAVEAM and wiring. Implementation and evidence may not silently redefine this law.
 
 ## 0. Product in one sentence
 
-**MedMap is a map-first clinic discovery and booking platform that helps customers find clinics offering selected clinical services and book only appointments that the clinic's configured availability, capacity, treatment rules, and booking policy can actually accept.**
+**MedMap is a map-first clinic discovery and booking intermediary that helps guests find real clinics offering published services, inspect one canonical clinic surface, contact the clinic through owner-provided contact channels, and book only appointments that the clinic's configured rules and authoritative acceptance can support.**
 
-MedMap is a service-discovery and booking intermediary. It is not a diagnosing clinician, treatment recommender, emergency-response service, or substitute for professional medical care.
+MedMap is not a diagnosing clinician, emergency service, treatment recommender, or medical-record system.
 
 ## 1. Product Invariants
 
-### 1.1 Service discovery precedes booking
-
-A booking is valid only when:
+### 1.1 Discovery precedes booking
 
 ```text
-customer need / clinical matter
-        ↓
-selected treatment / service
-        ↓
-clinic offers that service
-        ↓
-clinic is published + eligible
-        ↓
-requested date/time satisfies clinic rules
-        ↓
-capacity remains available
-        ↓
-authoritative booking is accepted
+need / clinical matter
+→ treatment or service discovery
+→ eligible published clinic
+→ clinic surface
+→ booking preparation
+→ authentication
+→ authoritative booking submission
+→ accepted / rejected result
 ```
 
-The UI MUST NOT imply that a slot is bookable merely because a calendar can render it.
+A rendered calendar slot is not a booking guarantee.
 
-### 1.2 Availability is clinic-owned business truth
+### 1.2 Clinic truth owns availability
 
-Clinic owners configure recurring hours, closures, exceptions, service duration, slot interval, capacity, and booking constraints. MedMap computes customer-facing availability from those rules plus durable bookings.
+Clinic owners define recurring hours, closures, exceptions, service duration, booking interval, capacity, and booking policy. Customer-facing availability is derived from those rules and durable booking state.
 
-Client-side availability is advisory. Final acceptance MUST re-check authoritative state at commit time.
+Client-rendered availability is advisory. Final acceptance must re-check authoritative state.
 
-### 1.3 Booking races are correctness failures
+### 1.3 Concurrency and idempotency are product correctness
 
-When remaining capacity cannot support two simultaneous requests, both MUST NOT be confirmed. The trusted booking operation MUST enforce concurrency safety and idempotency.
+Two simultaneous requests must not both consume capacity that only one can support. Duplicate submissions must be idempotent.
 
 ### 1.4 Clinical matching is not diagnosis
 
-A clinical matter is a discovery input, not a medical conclusion. Search or matching MUST NOT be presented as diagnosis, definitive treatment recommendation, or clinical suitability determination.
+Search terms and clinical-matter inputs are discovery context. They must never be rendered as diagnosis, clinical certainty, or a definitive medical suitability decision.
 
-### 1.5 Location is discovery context
+### 1.5 Contact, not messaging
 
-MapLibre/WebGL is the spatial presentation authority. Distance may improve discovery and ranking, but it MUST NOT be represented as proof of clinical quality, safety, suitability, or endorsement.
+MedMap has **no internal messaging system**.
 
-## 2. Map-first and Visual Product Law
+A clinic publishes approved contact channels. Those channels are stored as approved clinic contact records in canonical application state and exposed through the clinic Contact surface. Communication happens through those external clinic channels.
 
-### 2.1 Map-first identity
+## 2. MedMap 3D Spatial Product and Web Architecture
 
-The primary MedMap experience is spatial. MapLibre GL / WebGL is a first-class application surface.
+### 2.1 MedMap 3D Spatial is the website architecture
 
-MedMap MAY use 3D buildings, terrain/elevation, clustering, camera transitions, custom clinic markers, spatial highlighting, and layered overlays where they improve comprehension.
-
-Reduced-motion, degraded-map, and non-spatial alternatives MUST preserve the core task.
-
-### 2.2 Spatial glass-skeuomorphic language
-
-The visual language uses restrained translucent surfaces, depth, layered hierarchy, tangible controls, clear state changes, and clinical readability.
-
-Visual depth MUST NOT obscure:
+The product is intentionally a spatial website rather than a conventional stack of flat pages with decorative 3D added afterward.
 
 ```text
-availability
-price state
-booking state
-ownership state
-accessibility
-clinical disclaimers
+THREE.JS SPATIAL SITE
+  ├─ cinematic Hero environment
+  ├─ rooms / architectural boundaries
+  ├─ objects / section anchors
+  ├─ animation / transforms
+  ├─ lighting / materials / reflections
+  └─ presentation camera choreography
+
+REACT + HTML + CSS
+  ├─ Header / navigation
+  ├─ semantic controls
+  ├─ search
+  ├─ clinic surfaces
+  ├─ authentication
+  ├─ booking
+  └─ accessibility fallback
+
+MAPLIBRE GL JS
+  └─ guest geographic discovery / filtering / search
+
+CANONICAL APPLICATION DATA
+  └─ Firestore + trusted server boundaries
 ```
 
-## 3. Clinic Page Law
+Three.js owns the authored spatial environment. MapLibre is **inside** MedMap 3D Spatial as its geographic discovery engine. Neither visual renderer becomes canonical domain authority.
 
-Every published clinic has one canonical clinic page with a stable navigation model.
+### 2.2 Initial theme root
 
-### 3.1 Public/guest clinic surface
+The first authored environment is a minimalist modern coastal apartment / studio beside a beach, with surrounding trees and a calm clinical atmosphere.
 
-Guests see these five semantic tabs:
+The desired visual combination is:
+
+```text
+modern coastal architecture
++ light stone / concrete
++ warm wood
++ architectural glass
++ restrained metal
++ beach / coastal horizon
++ surrounding greenery
++ soft natural daylight
++ controlled clinical blue-green accents
++ restrained glass-skeuomorphic UI
+```
+
+The theme must feel cinematic without becoming theatrical clutter. Clinical clarity is the counterweight to visual atmosphere.
+
+### 2.3 Arrival concept
+
+The opening Hero is a spatial arrival:
+
+```text
+arrive from afar
+→ approach the building
+→ cross a valid architectural opening
+→ enter the Main Hall
+→ Header reveals
+→ section/object anchors become legible
+→ selected object focuses
+→ child UI reveals
+```
+
+The normal camera path must respect architectural boundaries. Ordinary traversal must not pass through walls or closed structural surfaces.
+
+### 2.4 Rooms represent product contexts
+
+The current baseline census is:
+
+```text
+1. Arrival
+2. Main Hall / Home
+3. Guest Discovery Room
+4. Clinic Room
+5. Authentication
+6. Patient Workspace
+7. Clinic Owner Workspace
+```
+
+This is a product census, not a commitment to a literal physical building plan. Room, corridor, portal, and camera composition are the spatial expression of each context.
+
+### 2.5 Spatial objects are active interfaces
+
+Objects are not merely static decoration. A product object may:
+
+```text
+idle
+→ hover / focus
+→ transform
+→ animate
+→ expose or reveal child UI
+→ accept semantic action
+→ settle / return
+```
+
+The object is still a presentation anchor. Its visual state must not become a second source of truth for clinic, booking, ownership, availability, or entitlement.
+
+### 2.6 Cinematic lighting is part of the product theme
+
+Lighting is not only technical decoration. It controls perceived hierarchy, material legibility, reflection, transparency, contrast, depth, and visual focus.
+
+The spatial experience must consider:
+
+```text
+key / sun direction
+fill balance
+rim contribution
+window daylight
+interior shadow
+material roughness
+specular intensity
+glass transparency
+reflection readability
+contrast against UI
+exposure / tone mapping
+fog / atmosphere
+```
+
+Lighting must support meaning. Decorative brightness must never imply availability, capacity, popularity, safety, endorsement, or clinical superiority.
+
+### 2.7 Spatial camera questions that must be answered by later contracts/skills
+
+Product law requires these questions to be resolved before corresponding implementation is accepted:
+
+- What are the named camera states for arrival, hall entry, object focus, room entry, return, and overview?
+- What minimum and maximum position, distance, yaw, pitch, and any roll are allowed for each state?
+- How does a new camera target replace an existing target without creating an unbounded transition queue?
+- How is interruption handled while a transition is in progress?
+- Which transitions are scroll-driven, pointer-assisted, keyboard-accessible, or explicitly triggered by semantic UI?
+- What guarantees keep normal traversal outside solid walls and other forbidden architecture?
+- How does the system behave when a room or object is unavailable at a narrow viewport?
+
+### 2.8 Spatial traversal questions
+
+- What is the exact Hero traversal region?
+- How is scroll distance normalized into bounded progress?
+- What happens on overscroll, touch momentum, keyboard scrolling, and reduced motion?
+- Which camera transitions are reversible?
+- Can users cancel a transition and move to another target immediately?
+- What is the semantic non-spatial equivalent of every spatial action?
+
+### 2.9 Occlusion questions
+
+- Which objects may overlap other objects?
+- Which semantic controls are never allowed to be visually occluded?
+- How are clinic identity, price, booking state, contact access, and accessibility controls protected from decorative geometry?
+- When an HTML panel and 3D object compete for salience, which layer wins?
+- Can fog, glass, reflections, bloom, or lighting reduce semantic legibility below the acceptable threshold?
+
+### 2.10 Information hierarchy
+
+Spatial composition must prioritize:
+
+```text
+1. semantic action
+2. clinic identity
+3. service / discovery meaning
+4. geographic context
+5. spatial guidance
+6. decoration
+```
+
+### 2.11 Spatial representation is not domain meaning
+
+These mappings are forbidden:
+
+```text
+3D building height ≠ clinic quality
+object brightness ≠ availability
+object size ≠ booking capacity
+spatial prominence ≠ endorsement
+visual health symbol ≠ diagnosis / suitability
+```
+
+### 2.12 Spatial fallback
+
+Three.js is progressive presentation. MapLibre is progressive geographic presentation. The core tasks of discovering a clinic, inspecting its services, contacting the clinic, authenticating, and booking must remain available through semantic application UI when either renderer is unavailable.
+
+## 3. Guest Clinic Surface
+
+Every public clinic uses one canonical semantic model:
 
 ```text
 PROFILE | SERVICES | BOOKING | ABOUT | CONTACT
 ```
 
-The implementation may render these as tabs, nested routes, segmented navigation, responsive panels, or equivalent navigation, but the five responsibilities MUST remain distinct.
+A route, tabs, panels, or responsive equivalent may change visually, but the five responsibilities remain distinct.
 
-### 3.2 Clinic hero
+### 3.1 Profile
 
-Every clinic has exactly one canonical **clinic hero**, the primary high-salience presentation shown when a user enters that clinic page.
+Identity, approved presentation, basic information, and location/context.
 
-The hero should establish:
+### 3.2 Services
 
-```text
-clinic identity
-logo / primary visual
-clinic name
-basic location/context
-primary trust/availability signal
-primary next action
-```
+Only enabled/published services are publicly displayed as offerings. Price must have an explicit state such as fixed/starting/range/contact/not-published when those capabilities are enabled. Unknown price is never zero.
 
-The hero MUST derive from canonical clinic data and MUST NOT become a second source of truth.
+### 3.3 Booking
 
-### 3.3 Profile tab
+Customer booking submission occurs here and is authenticated before final booking submission.
 
-The Profile tab presents:
+### 3.4 About
 
-```text
-logo
-background / cover
-clinic name
-basic information
-location/context
-approved links
-service-summary information
-```
+Approved descriptive information only.
 
-Only published/approved public data is displayed.
+### 3.5 Contact
 
-### 3.4 Services tab
+Approved clinic-owned contact channels. No MedMap inbox.
 
-The Services tab displays services/treatments explicitly enabled for public display by the clinic.
+## 4. Authentication and Registration
 
-A service MAY include:
+A guest may discover clinics without authentication.
+
+Authentication becomes required when the guest proceeds into actual booking submission.
+
+Supported initial authentication methods:
 
 ```text
-name
-description
-duration
-price state
-bookability/availability state
-material customer constraints
+Email
+Google
 ```
 
-Disabled or unpublished services MUST NOT be presented as currently bookable.
-
-Price state MUST remain explicit, for example:
+Registration roles:
 
 ```text
-priced
-price not published
-contact clinic
+Patient
+Clinic Owner
 ```
 
-Missing price MUST NOT become zero.
+Identity and role are canonical account state. A URL, hidden button, or UI label never grants clinic-owner authorization.
 
-### 3.5 Booking tab
+## 5. Owner Edit and Clinic Supply
 
-The Booking tab is the customer booking-submission surface.
+`Edit` is never a guest tab.
 
-The canonical flow is:
+Clinic Owners may manage the parts of their canonical clinic they are authorized to manage, including profile, services, schedules, availability-affecting rules, approved contacts, about content, and publication state where permitted.
 
-```text
-choose service
-→ choose date
-→ choose server-derived available time
-→ provide minimum approved booking information
-→ submit booking
-→ receive authoritative result
-```
+Clinic discovery is based on clinic records that are registered, sufficiently configured, approved/published for the applicable public state, and active under the final lifecycle contract.
 
-Selecting a time does not reserve it. Confirmation exists only after the authoritative booking operation succeeds.
+Whether a separate explicit **verified** state is required must be answered by the clinic-supply contract before it is introduced into runtime logic.
 
-### 3.6 About tab
+## 6. Booking and Clinic Operations
 
-The About tab contains the clinic's public bio and approved descriptive information.
+### 6.1 Durable booking records
 
-Clinic owners may edit this through Edit. Private operational notes, secrets, or unapproved clinical claims MUST NOT leak into the guest surface.
+Accepted bookings are durable records. Subscription intake limits do not erase historical or future accepted bookings.
 
-### 3.7 Contact tab
+### 6.2 Clinic operational register
 
-The Contact tab exposes clinic-provided contact channels.
+Each Clinic Owner needs a spreadsheet-like booking register / calendar view over canonical booking records so the owner can review requests, approve or reject them, manage operational status, and reduce the active intake queue efficiently.
 
-A clinic MUST provide at least one valid contact method before its public contact configuration is complete.
+The register is an operational projection, not a second database authority.
 
-Supported examples include:
+### 6.3 Intake allowance
 
-```text
-email
-phone
-website
-discord / community URL
-social link
-other approved external contact URL
-```
+A subscription tier may cap **new incoming booking requests per day**. That is an intake/queue allowance, not a product-wide storage ceiling.
 
-The platform MUST validate the structure/type appropriate to the channel.
+A pending request reaching a terminal queue action such as approval, rejection, cancellation, or another finalized state may free intake capacity according to the final contract.
 
-## 4. Owner Edit Law
+An already accepted booking is not retroactively invalidated merely because a later daily intake allowance is reached, reduced, or changed.
 
-### 4.1 Edit is owner-only
+### 6.4 Capacity
 
-`Edit` is not a guest tab and MUST NOT appear in guest navigation.
-
-Guest view:
-
-```text
-Profile | Services | Booking | About | Contact
-```
-
-An authorized clinic owner MAY additionally see:
-
-```text
-Edit
-```
-
-The Edit surface MAY manage:
-
-```text
-profile identity/presentation
-services and service state
-pricing state
-weekly schedule
-closed dates / exceptions
-capacity
-booking interval
-booking policy
-about content
-contact channels
-publication state where authorized
-```
-
-### 4.2 Authorization boundary
-
-Ownership MUST be established from authenticated identity and canonical clinic ownership state.
-
-None of the following is sufficient authorization:
-
-```text
-hidden button
-client route secrecy
-local storage value
-client-provided clinic owner claim
-query parameter
-```
-
-UI visibility is presentation. Backend authorization is enforcement.
-
-### 4.3 Owner edits and availability
-
-Owner edits to scheduling, service availability, duration, capacity, interval, or other booking-affecting fields MUST be treated as domain mutations that can invalidate customer-facing availability.
-
-The product MUST recheck or invalidate stale availability before booking acceptance.
-
-## 5. Scheduling and Capacity Law
-
-Clinics MAY configure each weekday as closed or open with one or more intervals. Split schedules are supported.
-
-Explicit date exceptions override recurring weekly rules. Special hours override the recurring rule for the affected date.
-
-Slot interval and treatment duration are separate concepts.
-
-Capacity modes include:
-
-```text
-exclusive
-concurrent
-optional treatment-specific override
-```
-
-Occupancy is evaluated over the treatment's active time range, not only by matching start timestamps.
-
-Conceptually:
+Clinic schedule/service capacity determines whether overlapping treatment demand can be supported.
 
 ```text
 remaining capacity
 =
 configured capacity
-− overlapping accepted occupancy
+− relevant overlapping accepted occupancy
 ```
 
-## 6. Clinical Matter and Service Law
+Exclusive, concurrent, and treatment-specific capacity are supported concepts.
 
-MedMap distinguishes:
+## 7. Subscription / Entitlement
+
+Only Clinic Owners require a clinic subscription to keep their operational clinic page working under the final entitlement definition.
+
+Baseline offer:
 
 ```text
-clinical matter / customer need
-        ≠
-treatment / service offered
+first qualifying month: PHP 99.00
+following 2 months: free
+then regular PHP 99.00 monthly
 ```
 
-The mapping exists for discovery only. Additional clinical metadata, eligibility rules, intake questions, diagnoses, or medical-record concepts require explicit product-law and safety review.
+The promotional benefit is intended as a one-time introductory offer. Final eligibility and commerce rules must be settled before live billing.
 
-## 7. Data and Infrastructure Authority
+The product supports up to five subscription tiers. Tier names, prices beyond the base offer, and exact daily incoming-request allowances remain undecided until the commerce contract resolves them.
 
-MedMap intentionally keeps the initial architecture small.
-
-### Firestore
-
-Firestore is the canonical durable MedMap application-state authority for:
+Subscription state is distinct from:
 
 ```text
-clinics
-clinic ownership metadata
-treatments/services
-schedules/exceptions
-bookings
-subscription projection/state
+clinic open state
+service availability
+slot availability
+booking confirmation
 ```
 
-There MUST be one explicit canonical source of truth for each domain concept.
+Questions that must be answered before commerce completion:
 
-### Firebase Authentication
+- What exactly becomes unavailable when entitlement is inactive?
+- Is the clinic hidden from discovery, non-bookable, or fully suspended?
+- What happens to already accepted future bookings?
+- What happens to pending requests at suspension time?
+- When does queue allowance become available again after a request reaches a terminal state?
+- How does a tier reduction affect same-day intake allowance?
+- Does the introduction offer attach to an account, a Clinic Owner, or a subscription entity?
+- What are retry, grace, refund, tax, and cancellation rules?
 
-Firebase Authentication establishes authenticated identity when enabled. Authenticated identity is used for ownership and customer-account authorization.
-
-### Supabase Storage
-
-Supabase Storage stores clinic media and approved assets. Firestore stores required metadata/references.
-
-Storage does not become the clinic-domain database merely because it stores files.
-
-### Supabase Edge Functions
-
-Supabase Edge Functions provide trusted execution for protected operations explicitly assigned to that boundary, including PayPal webhook handling.
-
-### PayPal
-
-PayPal is external authority for PayPal-originated subscription/payment events. MedMap correlates authenticated events and projects them into Firestore.
-
-The browser MUST NOT self-attest payment success, active subscription, entitlement, or webhook receipt.
-
-### GitHub
-
-GitHub is the engineering/source-control authority.
-
-## 8. Subscription / Entitlement Law
-
-The subscription flow is:
+## 8. Data and Authority
 
 ```text
-clinic/user identity
-      ↓
-server-owned subscription intent/correlation
-      ↓
-PayPal event
-      ↓
-authenticity verification
-      ↓
-idempotent durable commerce event
-      ↓
-Firestore subscription projection
-      ↓
-entitlement decision
+Firestore
+  = canonical MedMap domain state
+
+Firebase Authentication
+  = authenticated identity
+
+Supabase Storage
+  = clinic/media asset storage
+
+Supabase Edge Functions / trusted backend
+  = protected server operations and external-event handling
+
+PayPal
+  = external authority for PayPal-originated payment/subscription events
+
+GitHub
+  = engineering source-control surface, not product authority
 ```
 
-Subscription state and booking state are distinct.
+The current working source is the project package and its repository state. No provider becomes product authority merely because it stores code or data.
 
-## 9. Governance Boundary
+## 9. Privacy and Safety
 
-MedMap adopts the TeamAi/ToolKit principle that product authority, execution discipline, skills, implementation, and evidence are different layers.
+MedMap minimizes customer data and must not become a general medical-history repository.
 
-```text
-Human product decisions
-        ↓
-PRODUCT_LAW.md
-        ↓
-approved plans/contracts
-        ↓
-policy + skills
-        ↓
-implementation
-        ↓
-verification evidence
-        ↓
-handover / endorsement / knowledge
-```
+It must not diagnose, fabricate availability, hide material booking constraints, misrepresent price, expose private information, or confirm a booking before authoritative acceptance.
 
-Skills describe bounded procedures. They do not grant authority.
-
-Governance artifacts MUST remain outside product business logic. Product business logic MUST NOT be hidden in governance documents.
-
-## 10. ORUCAVEAM
-
-MedMap adopts the reusable TeamAi execution discipline:
-
-```text
-O Objective
-R Restrictions
-U User Authority
-C Canonical Authority
-A Action
-V Verification
-E Efficiency
-A Audit
-M Minimalistic Efficiency / Resource Use
-```
-
-Before an implementation action, the agent must understand what is being changed, what must not be crossed, why the user authorized it, which system owns the state, the smallest safe action, how it will be verified, how unnecessary work is avoided, what evidence survives, and the minimum sufficient resource/tool use.
-
-ORUCAVEAM is not a second product law.
-
-## 11. Verification Law
-
-```text
-implemented ≠ verified ≠ runtime-proven ≠ completed
-```
-
-Evidence must match the claim:
-
-```text
-build → compilation evidence
-contract test → exercised contract evidence
-browser test → exercised UI-flow evidence
-Firestore read-back → observed durable-state evidence
-PayPal live test → tested external commerce-path evidence
-```
-
-A browser screenshot or green build MUST NOT be inflated into proof of unrelated backend, authorization, payment, or concurrency behavior.
-
-## 12. Privacy and Safety
-
-MedMap MUST minimize sensitive customer-data collection and retention.
-
-The platform MUST NOT:
-
-- diagnose users;
-- falsely claim medical suitability;
-- fabricate clinic or treatment availability;
-- conceal material booking constraints;
-- turn unknown price into zero;
-- confirm a booking before authoritative acceptance;
-- expose private customer/clinic information without authorization;
-- present itself as emergency care without an explicitly approved capability.
-
-Clinical narratives and free-text health information SHOULD NOT become a general-purpose data lake.
-
-## 13. State Semantics
-
-These states remain distinct:
+## 10. State Semantics
 
 ```text
 clinic registered
@@ -448,60 +404,54 @@ clinic open
 slot available
 booking requested
 booking confirmed
+booking rejected
 booking cancelled
 subscription active
-subscription suspended/expired
+subscription suspended / expired
 ```
 
-Examples:
+And:
 
 ```text
 subscription active ≠ clinic open
-clinic open ≠ treatment available
-treatment available ≠ selected time available
+clinic open ≠ service available
+service available ≠ selected time available
 slot available ≠ booking confirmed
 ```
 
-## 14. Change and Conflict Rule
+## 11. Change / Conflict Rule
 
-When a proposed implementation or document conflicts with this law or another canonical contract:
+When implementation or documentation conflicts with a canonical decision:
 
 ```text
 STOP
-  ↓
-identify authority
-  ↓
-preserve discrepancy
-  ↓
-determine blast radius
-  ↓
-reconcile the product decision
-  ↓
-make the smallest coherent change
-  ↓
-re-verify
+→ identify authority
+→ preserve discrepancy
+→ determine blast radius
+→ resolve the product decision
+→ update the correct layer
+→ verify again
 ```
 
-Recency, convenience, green tests, or deployment success do not override canonical authority.
+A green test, recent commit, or convenient implementation does not override Product Law.
 
-## 15. Product Completion
+## 12. Product Completion
 
-A meaningful MedMap feature is complete only when:
+A slice is not complete merely because code exists.
 
 ```text
 Product Law
-  → plan / contract
-  → applicable skill/procedure
-  → implementation
-  → verification evidence
-  → integration/reconciliation
-  → handover / endorsement
+→ Masterplan slice
+→ Contract
+→ Skill
+→ Implementation
+→ Verification evidence
+→ Reconciliation
+→ Full project ZIP handover
 ```
 
-Clinic ownership and booking-critical work must include the relevant authorization, visibility, availability, concurrency, idempotency, and failure-path evidence.
+The full project ZIP handover is mandatory for every edit, fix, addition, code change, documentation change, or other project mutation.
 
-## 16. Initial North Star
+## 13. Initial North Star
 
-> **Make it easier to find a real clinic that offers the service you need, see what it actually offers, understand how to contact it, and book a time the clinic can genuinely accept.**
-
-The map, clinic hero, Profile, Services, Booking, About, Contact, and owner-only Edit experiences all serve that promise.
+> Make it easier to find a real clinic that offers the service you need, understand what it actually offers, contact the clinic through its approved channels, and book only what the clinic can genuinely accept.
