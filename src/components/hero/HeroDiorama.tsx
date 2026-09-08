@@ -1,430 +1,138 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import * as THREE from "three";
 
-type Vec3 = [number, number, number];
-type Color = [number, number, number];
+type PoseName = "arrival" | "hall" | "discovery" | "clinic" | "overview";
+type SpatialId = "discovery" | "clinic" | "operations";
 
-type MeshSpec = {
-  center: Vec3;
-  size: Vec3;
-  color: Color;
-  emissive?: number;
+type Pose = { position: THREE.Vector3; target: THREE.Vector3; fov: number };
+
+const POSES: Record<PoseName, Pose> = {
+  arrival: { position: new THREE.Vector3(0.2, 3.0, 15.5), target: new THREE.Vector3(0, 2.0, 0.8), fov: 40 },
+  hall: { position: new THREE.Vector3(0.2, 2.5, 10.2), target: new THREE.Vector3(0, 2.0, 0.4), fov: 44 },
+  discovery: { position: new THREE.Vector3(-2.7, 2.35, 5.8), target: new THREE.Vector3(-2.2, 1.75, 2.0), fov: 48 },
+  clinic: { position: new THREE.Vector3(2.8, 2.25, 5.9), target: new THREE.Vector3(2.2, 1.8, 1.9), fov: 48 },
+  overview: { position: new THREE.Vector3(0.1, 4.0, 8.8), target: new THREE.Vector3(0, 1.0, -0.2), fov: 45 },
 };
 
-type CameraPose = {
-  yaw: number;
-  pitch: number;
-  distance: number;
-  target: Vec3;
-};
-
-const MESHES: MeshSpec[] = [
-  { center: [0, -0.34, 0.2], size: [8.6, 0.28, 5.4], color: [0.08, 0.19, 0.23] },
-  { center: [0.15, -0.12, -0.08], size: [3.7, 0.18, 2.6], color: [0.12, 0.34, 0.40] },
-  { center: [0.15, -0.015, -1.22], size: [0.62, 0.05, 2.0], color: [0.36, 0.66, 0.71], emissive: 0.08 },
-  { center: [-0.7, 0.88, -0.10], size: [1.85, 1.85, 1.55], color: [0.50, 0.78, 0.84] },
-  { center: [0.68, 1.18, 0.18], size: [1.22, 2.45, 1.18], color: [0.67, 0.89, 0.92] },
-  { center: [0.02, 0.78, -0.86], size: [1.52, 0.18, 0.30], color: [0.42, 0.82, 0.88], emissive: 0.18 },
-  { center: [-0.72, 0.82, -1.05], size: [0.15, 1.72, 0.18], color: [0.37, 0.78, 0.86], emissive: 0.14 },
-  { center: [0.72, 0.82, -1.05], size: [0.15, 1.72, 0.18], color: [0.37, 0.78, 0.86], emissive: 0.14 },
-  { center: [0, 1.66, -1.05], size: [1.58, 0.15, 0.18], color: [0.53, 0.92, 0.96], emissive: 0.22 },
-  { center: [2.55, 0.62, 0.75], size: [0.24, 2.02, 0.24], color: [0.29, 0.67, 0.76], emissive: 0.25 },
-  { center: [-2.35, 0.44, 1.55], size: [1.05, 1.55, 0.92], color: [0.10, 0.25, 0.29] },
-  { center: [2.55, 0.43, 1.68], size: [1.00, 1.62, 0.92], color: [0.10, 0.25, 0.29] },
+const OBJECTS: Array<{ id: SpatialId; label: string; position: [number, number, number]; color: number }> = [
+  { id: "discovery", label: "Find clinics", position: [-2.4, 0, 1.9], color: 0x7bd0d8 },
+  { id: "clinic", label: "Clinic", position: [2.25, 0, 1.9], color: 0xa7e3e5 },
+  { id: "operations", label: "Owner workspace", position: [0.2, 0, -0.7], color: 0xd6c7a7 },
 ];
 
-const CAMERA_POSES = {
-  arrival: { yaw: -0.34, pitch: 0.18, distance: 9.4, target: [0.05, 0.48, 0.10] as Vec3 },
-  focus: { yaw: -0.23, pitch: 0.23, distance: 7.7, target: [0.10, 0.72, -0.20] as Vec3 },
-  overview: { yaw: -0.62, pitch: 0.14, distance: 10.8, target: [0, 0.10, 0.40] as Vec3 },
-} satisfies Record<string, CameraPose>;
-
-const VERTEX_SHADER = `#version 300 es
-in vec3 a_position;
-in vec3 a_color;
-in vec3 a_normal;
-in float a_emissive;
-uniform mat4 u_matrix;
-out vec3 v_color;
-out vec3 v_normal;
-out vec3 v_position;
-out float v_emissive;
-void main() {
-  vec4 worldPosition = vec4(a_position, 1.0);
-  gl_Position = u_matrix * worldPosition;
-  v_position = worldPosition.xyz;
-  v_normal = a_normal;
-  v_color = a_color;
-  v_emissive = a_emissive;
-}`;
-
-const FRAGMENT_SHADER = `#version 300 es
-precision highp float;
-in vec3 v_color;
-in vec3 v_normal;
-in vec3 v_position;
-in float v_emissive;
-uniform float u_time;
-out vec4 outColor;
-
-void main() {
-  vec3 n = normalize(v_normal);
-  vec3 lightA = normalize(vec3(-0.45, 0.90, 0.55));
-  vec3 lightB = normalize(vec3(0.60, 0.30, -0.40));
-  float diffuseA = max(dot(n, lightA), 0.0);
-  float diffuseB = max(dot(n, lightB), 0.0);
-  float ambient = 0.34;
-
-  vec3 lit = v_color * (ambient + diffuseA * 0.68 + diffuseB * 0.18);
-  float pulse = 0.92 + 0.08 * sin(u_time * 2.4);
-  lit += v_color * (v_emissive * pulse * 1.45);
-
-  float edge = pow(1.0 - max(dot(n, vec3(0.0, 0.0, 1.0)), 0.0), 2.0);
-  lit += vec3(0.18, 0.34, 0.38) * edge * 0.20;
-
-  float depth = clamp((v_position.z + 3.5) / 7.5, 0.0, 1.0);
-  float fog = smoothstep(0.0, 1.0, depth) * 0.30;
-  vec3 fogColor = vec3(0.03, 0.12, 0.15);
-  lit = mix(lit, fogColor, fog);
-
-  outColor = vec4(lit, 0.90);
-}`;
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
+function box(size: [number, number, number], material: THREE.Material, pos: [number, number, number]) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
+  mesh.position.set(...pos);
+  return mesh;
 }
 
-function lerp(a: number, b: number, amount: number) {
-  return a + (b - a) * amount;
+function makeObject(spec: (typeof OBJECTS)[number]) {
+  const group = new THREE.Group();
+  group.name = `spatial-object-${spec.id}`;
+  group.userData.spatialId = spec.id;
+  group.position.set(...spec.position);
+  const dark = new THREE.MeshStandardMaterial({ color: 0x26363b, roughness: 0.52, metalness: 0.45 });
+  const accent = new THREE.MeshStandardMaterial({ color: spec.color, emissive: spec.color, emissiveIntensity: 0.14, roughness: 0.28, metalness: 0.18 });
+  const light = new THREE.MeshStandardMaterial({ color: 0xf5f1e6, roughness: 0.42, metalness: 0.28 });
+  const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.88, 0.46, 28), dark); pedestal.position.y = 0.23; group.add(pedestal);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.45, 0.2), accent); frame.position.set(0, 1.0, -0.18); group.add(frame);
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.4, 20, 16), accent); glow.position.y = 1.42; group.add(glow);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.05, 8, 36), light); ring.rotation.x = Math.PI / 2; ring.position.y = 1.5; group.add(ring);
+  return group;
 }
 
-function lerpVec3(a: Vec3, b: Vec3, amount: number): Vec3 {
-  return [lerp(a[0], b[0], amount), lerp(a[1], b[1], amount), lerp(a[2], b[2], amount)];
-}
+function createEnvironment(scene: THREE.Scene) {
+  const root = new THREE.Group(); root.name = "medmap-coastal-apartment"; scene.add(root);
+  const stone = new THREE.MeshStandardMaterial({ color: 0xd8d3c7, roughness: 0.84 });
+  const wall = new THREE.MeshStandardMaterial({ color: 0xf0efe9, roughness: 0.72 });
+  const side = new THREE.MeshStandardMaterial({ color: 0xe4e1da, roughness: 0.78 });
+  const wood = new THREE.MeshStandardMaterial({ color: 0x876f54, roughness: 0.66 });
+  const frame = new THREE.MeshStandardMaterial({ color: 0x273941, roughness: 0.4, metalness: 0.46 });
+  const glass = new THREE.MeshPhysicalMaterial({ color: 0x9bc9c9, transparent: true, opacity: 0.38, transmission: 0.22, roughness: 0.16, clearcoat: 0.45 });
+  const leaf = new THREE.MeshStandardMaterial({ color: 0x5d8b75, roughness: 0.94 });
+  const trunk = new THREE.MeshStandardMaterial({ color: 0x6e5b49, roughness: 1 });
 
-function interpolatePose(a: CameraPose, b: CameraPose, amount: number): CameraPose {
-  return {
-    yaw: lerp(a.yaw, b.yaw, amount),
-    pitch: lerp(a.pitch, b.pitch, amount),
-    distance: lerp(a.distance, b.distance, amount),
-    target: lerpVec3(a.target, b.target, amount),
-  };
-}
-
-function createShader(gl: WebGL2RenderingContext, type: number, source: string) {
-  const shader = gl.createShader(type);
-  if (!shader) throw new Error("Unable to create WebGL shader");
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    const info = gl.getShaderInfoLog(shader);
-    gl.deleteShader(shader);
-    throw new Error(info ?? "WebGL shader compilation failed");
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 28), stone); floor.rotation.x = -Math.PI / 2; floor.position.z = -0.6; root.add(floor);
+  root.add(box([13, 7.4, 0.24], wall, [0, 3.7, -6.1]));
+  root.add(box([0.24, 7.4, 12], side, [-6.35, 3.7, -0.2]));
+  root.add(box([0.24, 7.4, 12], side, [6.35, 3.7, -0.2]));
+  for (const x of [-4.7, -2.35, 0, 2.35, 4.7]) root.add(box([0.1, 3.2, 0.12], wood, [x, 5.6, -1.4]));
+  for (const x of [-3.8, -1.25, 1.25, 3.8]) {
+    root.add(box([2.05, 3.15, 0.06], glass, [x, 3.45, -5.94]));
+    root.add(box([0.06, 3.4, 0.12], frame, [x - 1.03, 3.45, -5.82]));
+    root.add(box([0.06, 3.4, 0.12], frame, [x + 1.03, 3.45, -5.82]));
   }
-  return shader;
-}
-
-function createProgram(gl: WebGL2RenderingContext) {
-  const program = gl.createProgram();
-  if (!program) throw new Error("Unable to create WebGL program");
-  gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER));
-  gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER));
-  gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    const info = gl.getProgramInfoLog(program);
-    gl.deleteProgram(program);
-    throw new Error(info ?? "WebGL program linking failed");
+  for (const x of [-5.15, 5.15]) {
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 2.6, 10), trunk); t.position.set(x, 1.3, -6.35); root.add(t);
+    const c = new THREE.Mesh(new THREE.SphereGeometry(1.25, 14, 12), leaf); c.position.set(x, 3.1, -6.35); root.add(c);
   }
-  return program;
+  root.add(box([0.16, 5.6, 0.25], frame, [-1.65, 2.8, 4.8]));
+  root.add(box([0.16, 5.6, 0.25], frame, [1.65, 2.8, 4.8]));
+  root.add(box([3.45, 0.16, 0.25], frame, [0, 5.55, 4.8]));
+  return root;
 }
 
-function perspective(fov: number, aspect: number, near: number, far: number) {
-  const f = 1 / Math.tan(fov / 2);
-  const rangeInv = 1 / (near - far);
-  return new Float32Array([
-    f / aspect, 0, 0, 0,
-    0, f, 0, 0,
-    0, 0, (near + far) * rangeInv, -1,
-    0, 0, 2 * near * far * rangeInv, 0,
-  ]);
-}
-
-function multiply(a: Float32Array, b: Float32Array) {
-  const out = new Float32Array(16);
-  for (let column = 0; column < 4; column += 1) {
-    for (let row = 0; row < 4; row += 1) {
-      out[column * 4 + row] =
-        a[0 * 4 + row] * b[column * 4 + 0] +
-        a[1 * 4 + row] * b[column * 4 + 1] +
-        a[2 * 4 + row] * b[column * 4 + 2] +
-        a[3 * 4 + row] * b[column * 4 + 3];
-    }
-  }
-  return out;
-}
-
-function lookAt(eye: Vec3, target: Vec3, up: Vec3 = [0, 1, 0]) {
-  const zx = eye[0] - target[0];
-  const zy = eye[1] - target[1];
-  const zz = eye[2] - target[2];
-  const zLength = Math.hypot(zx, zy, zz) || 1;
-  const z = [zx / zLength, zy / zLength, zz / zLength];
-  const xx = up[1] * z[2] - up[2] * z[1];
-  const xy = up[2] * z[0] - up[0] * z[2];
-  const xz = up[0] * z[1] - up[1] * z[0];
-  const xLength = Math.hypot(xx, xy, xz) || 1;
-  const x = [xx / xLength, xy / xLength, xz / xLength];
-  const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]];
-
-  return new Float32Array([
-    x[0], y[0], z[0], 0,
-    x[1], y[1], z[1], 0,
-    x[2], y[2], z[2], 0,
-    -(x[0] * eye[0] + x[1] * eye[1] + x[2] * eye[2]),
-    -(y[0] * eye[0] + y[1] * eye[1] + y[2] * eye[2]),
-    -(z[0] * eye[0] + z[1] * eye[1] + z[2] * eye[2]),
-    1,
-  ]);
-}
-
-function buildBox(center: Vec3, size: Vec3, color: Color, emissive = 0) {
-  const [cx, cy, cz] = center;
-  const [sx, sy, sz] = size;
-  const hx = sx / 2;
-  const hy = sy / 2;
-  const hz = sz / 2;
-  const x0 = cx - hx;
-  const x1 = cx + hx;
-  const y0 = cy - hy;
-  const y1 = cy + hy;
-  const z0 = cz - hz;
-  const z1 = cz + hz;
-  const faceColors: Color[] = [
-    color,
-    color.map((value) => value * 0.80) as Color,
-    color.map((value) => value * 0.64) as Color,
-    color.map((value) => Math.min(1, value * 1.12)) as Color,
-    color.map((value) => value * 0.90) as Color,
-    color.map((value) => value * 0.74) as Color,
-  ];
-  const faceNormals: Vec3[] = [
-    [0, 0, 1], [0, 0, -1], [0, 1, 0], [0, -1, 0], [1, 0, 0], [-1, 0, 0],
-  ];
-  const faces: Vec3[][] = [
-    [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]],
-    [[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0]],
-    [[x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0]],
-    [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]],
-    [[x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1]],
-    [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]],
-  ];
-  const vertices: number[] = [];
-  const colors: number[] = [];
-  const normals: number[] = [];
-  const emissiveData: number[] = [];
-  faces.forEach((face, faceIndex) => {
-    face.forEach((vertex) => {
-      vertices.push(...vertex);
-      colors.push(...faceColors[faceIndex]);
-      normals.push(...faceNormals[faceIndex]);
-      emissiveData.push(emissive);
-    });
-  });
-  return {
-    vertices,
-    colors,
-    normals,
-    emissive: emissiveData,
-    indices: [
-      0, 1, 2, 0, 2, 3,
-      4, 5, 6, 4, 6, 7,
-      8, 9, 10, 8, 10, 11,
-      12, 13, 14, 12, 14, 15,
-      16, 17, 18, 16, 18, 19,
-      20, 21, 22, 20, 22, 23,
-    ],
-  };
-}
+function smoothstep(v: number) { const t = Math.max(0, Math.min(1, v)); return t * t * (3 - 2 * t); }
 
 export function HeroDiorama() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const gl = canvas.getContext("webgl2", { alpha: true, antialias: true });
-    if (!gl) {
-      canvas.dataset.webgl = "unavailable";
-      return;
-    }
-    canvas.dataset.webgl = "active";
-    canvas.dataset.environmentVersion = "3";
-    canvas.dataset.cameraPov = "arrival";
-    canvas.dataset.cameraProgress = "0";
+    const canvas = canvasRef.current; if (!canvas) return;
+    const context = canvas.getContext("webgl2", { alpha: true, antialias: true, powerPreference: "high-performance" });
+    if (!context) { canvas.dataset.webgl = "unavailable"; canvas.dataset.environmentVersion = "4"; return; }
 
-    const program = createProgram(gl);
-    const positionLocation = gl.getAttribLocation(program, "a_position");
-    const colorLocation = gl.getAttribLocation(program, "a_color");
-    const normalLocation = gl.getAttribLocation(program, "a_normal");
-    const emissiveLocation = gl.getAttribLocation(program, "a_emissive");
-    const matrixLocation = gl.getUniformLocation(program, "u_matrix");
-    const timeLocation = gl.getUniformLocation(program, "u_time");
-    const positionBuffer = gl.createBuffer();
-    const colorBuffer = gl.createBuffer();
-    const normalBuffer = gl.createBuffer();
-    const emissiveBuffer = gl.createBuffer();
-    const indexBuffer = gl.createBuffer();
-    if (!positionBuffer || !colorBuffer || !normalBuffer || !emissiveBuffer || !indexBuffer) throw new Error("Unable to create WebGL buffers");
+    canvas.dataset.webgl = "active"; canvas.dataset.environmentVersion = "4"; canvas.dataset.cameraPov = "arrival"; canvas.dataset.cameraProgress = "0";
+    const renderer = new THREE.WebGLRenderer({ canvas, context, alpha: true, antialias: true, powerPreference: "high-performance" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.03;
 
-    const positionData: number[] = [];
-    const colorData: number[] = [];
-    const normalData: number[] = [];
-    const emissiveData: number[] = [];
-    const indexData: number[] = [];
-    let vertexOffset = 0;
-    for (const mesh of MESHES) {
-      const box = buildBox(mesh.center, mesh.size, mesh.color, mesh.emissive ?? 0);
-      positionData.push(...box.vertices);
-      colorData.push(...box.colors);
-      normalData.push(...box.normals);
-      emissiveData.push(...box.emissive);
-      box.indices.forEach((index) => indexData.push(index + vertexOffset));
-      vertexOffset += box.vertices.length / 3;
-    }
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(0xb6d0cf); scene.fog = new THREE.FogExp2(0xb6d0cf, 0.021);
+    const camera = new THREE.PerspectiveCamera(POSES.arrival.fov, 1, 0.1, 100); camera.position.copy(POSES.arrival.position);
+    scene.add(new THREE.HemisphereLight(0xf5f2ea, 0x456067, 2.0));
+    const sun = new THREE.DirectionalLight(0xffedd4, 3.3); sun.position.set(-5, 9, 8); scene.add(sun);
+    const rim = new THREE.DirectionalLight(0x9ddde0, 1.25); rim.position.set(6, 4, -3); scene.add(rim);
+    const environment = createEnvironment(scene);
+    const spatialGroups = new Map<SpatialId, THREE.Group>(); OBJECTS.forEach((spec) => { const group = makeObject(spec); spatialGroups.set(spec.id, group); scene.add(group); });
 
-    canvas.dataset.meshCount = String(MESHES.length);
-    canvas.dataset.meshTriangles = String(indexData.length / 3);
+    let targetPose: PoseName = "arrival", fromPose: PoseName = "arrival", transition = 1, progress = 0, active: SpatialId | null = null, px = 0, py = 0, raf = 0;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)"), raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2();
+    const setPose = (next: PoseName) => { if (next === targetPose && transition >= 1) return; fromPose = targetPose; targetPose = next; transition = 0; };
+    const setObject = (id: SpatialId | null) => { active = id; setPose(id === "discovery" ? "discovery" : id === "clinic" ? "clinic" : id === "operations" ? "overview" : "hall"); window.dispatchEvent(new CustomEvent("medmap-spatial-object-focus", { detail: { id } })); };
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positionData), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(positionLocation);
-    gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(colorLocation);
-    gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalData), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(normalLocation);
-    gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, emissiveBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(emissiveData), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(emissiveLocation);
-    gl.vertexAttribPointer(emissiveLocation, 1, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
-
-    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.clearColor(0, 0, 0, 0);
-    gl.useProgram(program);
-
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const pointer = { x: 0, y: 0 };
-    let currentPose: CameraPose = { ...CAMERA_POSES.arrival, target: [...CAMERA_POSES.arrival.target] as Vec3 };
-    let frame = 0;
-    let lastTime = performance.now();
-
-    const getTraversalProgress = () => {
-      const hero = canvas.closest(".hero-environment");
-      if (!(hero instanceof HTMLElement)) return 0;
-      const rect = hero.getBoundingClientRect();
-      const range = Math.max(1, rect.height - window.innerHeight);
-      return clamp(-rect.top / range, 0, 1);
+    const onPointerMove = (event: PointerEvent) => { const r = canvas.getBoundingClientRect(); px = Math.max(-0.18, Math.min(0.18, ((((event.clientX - r.left) / r.width) * 2) - 1) * 0.14)); py = Math.max(-0.12, Math.min(0.12, -(((((event.clientY - r.top) / r.height) * 2) - 1) * 0.08))); };
+    const onClick = (event: MouseEvent) => {
+      if (reducedMotion.matches) return;
+      const r = canvas.getBoundingClientRect(); pointer.set((((event.clientX - r.left) / r.width) * 2) - 1, -(((((event.clientY - r.top) / r.height) * 2) - 1))); raycaster.setFromCamera(pointer, camera);
+      const hit = raycaster.intersectObjects([...spatialGroups.values()], true)[0]; let node: THREE.Object3D | null = hit?.object ?? null; while (node && !node.userData.spatialId) node = node.parent; if (node?.userData.spatialId) setObject(node.userData.spatialId as SpatialId);
     };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      const hero = canvas.closest(".hero-environment");
-      if (!(hero instanceof HTMLElement)) return;
-      const rect = hero.getBoundingClientRect();
-      if (event.clientY < rect.top || event.clientY > rect.bottom) return;
-      pointer.x = clamp(((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1, -1, 1);
-      pointer.y = clamp(((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 - 1, -1, 1);
+    const onPoseRequest = (event: Event) => { const pose = (event as CustomEvent<{ pose?: string }>).detail?.pose; if (pose === "discovery") setObject("discovery"); else if (pose === "clinic") setObject("clinic"); else if (pose === "operations") setObject("operations"); };
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setObject(null); };
+    const onScroll = () => {
+      if (reducedMotion.matches) return; const hero = canvas.closest(".hero-environment") as HTMLElement | null; if (!hero) return; const rect = hero.getBoundingClientRect(); progress = Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height - window.innerHeight))); if (progress < 0.08) setPose("arrival"); else if (progress < 0.42) setPose("hall"); else setPose("overview");
     };
-    const handlePointerLeave = () => {
-      pointer.x = 0;
-      pointer.y = 0;
+    const onResize = () => { const width = Math.max(1, canvas.clientWidth), height = Math.max(1, canvas.clientHeight); renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix(); };
+
+    canvas.addEventListener("pointermove", onPointerMove); canvas.addEventListener("click", onClick); window.addEventListener("medmap-spatial-set-pose", onPoseRequest); window.addEventListener("keydown", onKeyDown); window.addEventListener("scroll", onScroll, { passive: true }); window.addEventListener("resize", onResize); reducedMotion.addEventListener("change", onScroll); onResize(); onScroll();
+    const clock = new THREE.Clock(), desiredPosition = new THREE.Vector3(), desiredTarget = new THREE.Vector3(), scale = new THREE.Vector3();
+    const animate = () => {
+      const elapsed = clock.getElapsedTime(); transition = reducedMotion.matches ? 1 : Math.min(1, transition + 0.035); const a = POSES[fromPose], b = POSES[targetPose], t = smoothstep(transition);
+      desiredPosition.lerpVectors(a.position, b.position, t); desiredTarget.lerpVectors(a.target, b.target, t);
+      if (!reducedMotion.matches) { desiredPosition.x += px * 0.45; desiredPosition.y += py * 0.22; desiredTarget.x += px * 0.32; desiredTarget.y += py * 0.12; }
+      camera.position.lerp(desiredPosition, 0.24); camera.lookAt(desiredTarget); camera.fov = a.fov + (b.fov - a.fov) * t; camera.updateProjectionMatrix();
+      spatialGroups.forEach((group, id) => { const selected = active === id; if (!reducedMotion.matches) group.rotation.y += selected ? 0.002 : 0.0008; const s = selected ? 1.08 : 1; scale.set(s, s, s); group.scale.lerp(scale, 0.08); });
+      canvas.dataset.cameraPov = targetPose; canvas.dataset.cameraProgress = progress.toFixed(3); canvas.dataset.cameraDistance = camera.position.distanceTo(desiredTarget).toFixed(3); canvas.dataset.cameraYaw = Math.atan2(desiredTarget.x - camera.position.x, desiredTarget.z - camera.position.z).toFixed(3); canvas.dataset.cameraPitch = Math.atan2(desiredTarget.y - camera.position.y, Math.hypot(desiredTarget.x - camera.position.x, desiredTarget.z - camera.position.z)).toFixed(3); canvas.dataset.spatialObject = active ?? "none";
+      renderer.render(scene, camera); raf = requestAnimationFrame(animate);
     };
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("blur", handlePointerLeave);
+    animate();
 
-    const render = (now: number) => {
-      const delta = Math.min(50, Math.max(0, now - lastTime));
-      lastTime = now;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const width = Math.max(1, Math.round(canvas.clientWidth * dpr));
-      const height = Math.max(1, Math.round(canvas.clientHeight * dpr));
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-        gl.viewport(0, 0, width, height);
-      }
-
-      const progress = getTraversalProgress();
-      const focused = document.querySelector(".floating-clinic-card:hover, .floating-clinic-card:focus-within") !== null;
-      const basePose = focused ? CAMERA_POSES.focus : interpolatePose(CAMERA_POSES.arrival, CAMERA_POSES.overview, progress);
-      const motionScale = reducedMotion.matches ? 0 : 1;
-      const targetPose: CameraPose = {
-        ...basePose,
-        yaw: basePose.yaw + pointer.x * 0.055 * motionScale,
-        pitch: clamp(basePose.pitch - pointer.y * 0.035 * motionScale, 0.08, 0.30),
-      };
-      const smoothing = 1 - Math.pow(0.001, delta / (focused ? 150 : 280));
-      currentPose = {
-        yaw: lerp(currentPose.yaw, targetPose.yaw, smoothing),
-        pitch: lerp(currentPose.pitch, targetPose.pitch, smoothing),
-        distance: lerp(currentPose.distance, targetPose.distance, smoothing),
-        target: lerpVec3(currentPose.target, targetPose.target, smoothing),
-      };
-
-      canvas.dataset.cameraPov = focused ? "focus" : progress < 0.12 ? "arrival" : "overview";
-      canvas.dataset.cameraProgress = progress.toFixed(3);
-      canvas.dataset.cameraYaw = currentPose.yaw.toFixed(3);
-      canvas.dataset.cameraPitch = currentPose.pitch.toFixed(3);
-      canvas.dataset.cameraDistance = currentPose.distance.toFixed(3);
-
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      gl.uniform1f(timeLocation, reducedMotion.matches ? 0 : now * 0.001);
-      const eye: Vec3 = [
-        currentPose.target[0] + Math.sin(currentPose.yaw) * Math.cos(currentPose.pitch) * currentPose.distance,
-        currentPose.target[1] + Math.sin(currentPose.pitch) * currentPose.distance,
-        currentPose.target[2] + Math.cos(currentPose.yaw) * Math.cos(currentPose.pitch) * currentPose.distance,
-      ];
-      const projection = perspective(Math.PI / 4.2, width / height, 0.1, 100);
-      const view = lookAt(eye, currentPose.target);
-      gl.uniformMatrix4fv(matrixLocation, false, multiply(projection, view));
-      gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
-      frame = window.requestAnimationFrame(render);
-    };
-
-    render(performance.now());
     return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("blur", handlePointerLeave);
-      gl.deleteBuffer(positionBuffer);
-      gl.deleteBuffer(colorBuffer);
-      gl.deleteBuffer(normalBuffer);
-      gl.deleteBuffer(emissiveBuffer);
-      gl.deleteBuffer(indexBuffer);
-      gl.deleteProgram(program);
+      cancelAnimationFrame(raf); canvas.removeEventListener("pointermove", onPointerMove); canvas.removeEventListener("click", onClick); window.removeEventListener("medmap-spatial-set-pose", onPoseRequest); window.removeEventListener("keydown", onKeyDown); window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onResize); reducedMotion.removeEventListener("change", onScroll);
+      environment.traverse((child) => { const mesh = child as THREE.Mesh; mesh.geometry?.dispose?.(); if (Array.isArray(mesh.material)) mesh.material.forEach((m) => m.dispose()); else mesh.material?.dispose?.(); });
+      spatialGroups.forEach((group) => group.traverse((child) => { const mesh = child as THREE.Mesh; mesh.geometry?.dispose?.(); if (Array.isArray(mesh.material)) mesh.material.forEach((m) => m.dispose()); else mesh.material?.dispose?.(); })); renderer.dispose();
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="hero-mesh-canvas"
-      data-testid="hero-mesh-canvas"
-      data-webgl="unavailable"
-      data-mesh-count="12"
-      data-mesh-triangles="144"
-      data-environment-version="3"
-      data-camera-pov="arrival"
-      data-camera-progress="0"
-      aria-hidden="true"
-    />
-  );
+  return <canvas ref={canvasRef} className="hero-mesh-canvas" data-testid="hero-mesh-canvas" data-webgl="pending" data-environment-version="4" data-mesh-count="0" data-mesh-triangles="0" data-camera-pov="arrival" data-camera-progress="0" aria-label="MedMap cinematic 3D spatial environment" />;
 }
